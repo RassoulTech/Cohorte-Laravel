@@ -73,4 +73,18 @@ class User extends Authenticatable
     {
         return $this->hasMany(AppelIa::class);
     }
+
+    // -------------------------------------------------------------- Roles
+    // Le role est teste par une methode et jamais par une chaine ecrite un
+    // peu partout : le jour ou les roles changent, on ne modifie qu'ici.
+
+    public function estEnseignant(): bool
+    {
+        return $this->role === 'enseignant';
+    }
+
+    public function estDelegue(): bool
+    {
+        return $this->role === 'delegue';
+    }
 }

@@ -1,4 +1,6 @@
 *.log
+# Document interne Wommate : on ne le publie pas sur le depot
+/Projet_Cohorte_Guide_Evaluation.pdf
 .DS_Store
 .env
 .env.backup

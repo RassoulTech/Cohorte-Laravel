@@ -1,59 +1,78 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Cohorte
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Réseau social privé de promotion : on n'y entre que sur invitation, on n'y voit
+que le contenu de sa propre promotion, et un modèle de langage (OpenRouter)
+modère les publications et détecte les questions en double.
 
-## About Laravel
+Projet d'évaluation Wommate Technology — Laravel 12, Blade, Fortify, OpenRouter.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Prérequis
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.2 ou plus
+- Composer
+- XAMPP (Apache + MySQL/MariaDB) — MySQL démarré depuis le panneau de contrôle
+- Node et npm
+- Git
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Installation
 
-## Learning Laravel
+```bash
+git clone https://github.com/RassoulTech/Cohorte-Laravel.git cohorte
+cd cohorte
+composer install
+cp .env.example .env
+php artisan key:generate
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Créer la base de données, MySQL étant démarré depuis XAMPP :
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```sql
+CREATE DATABASE cohorte CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-## Laravel Sponsors
+Renseigner ensuite la section base de données du fichier `.env` :
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```ini
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=cohorte
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-### Premium Partners
+Puis créer les tables et lancer le serveur :
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+php artisan migrate
+php artisan serve
+```
 
-## Contributing
+L'application est disponible sur http://127.0.0.1:8000.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Configuration métier
 
-## Code of Conduct
+Les règles chiffrées du projet sont centralisées dans `config/cohorte.php` et
+pilotables depuis le `.env`, sans toucher au code :
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Variable | Rôle | Défaut |
+|---|---|---:|
+| `COHORTE_QUOTA_IA` | appels à l'IA par membre et par jour | 10 |
+| `COHORTE_SEUIL_SIGNALEMENT` | signalements avant masquage automatique | 3 |
+| `COHORTE_SEUIL_EPINGLAGE` | réputation ouvrant le droit d'épingler | 50 |
+| `COHORTE_MODERATION_FAIL_OPEN` | publier quand même si l'IA ne répond pas | false |
 
-## Security Vulnerabilities
+## Comptes de démonstration
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+*Disponibles à partir de la phase 2, avec `php artisan migrate:fresh --seed`.*
 
-## License
+## Clés OpenRouter
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+*À renseigner à partir de la phase 7. La clé se met uniquement dans le `.env`,
+jamais dans le code ni dans le dépôt.*
+
+## Documentation
+
+- `docs/JOURNAL.md` — journal de bord, une entrée par phase
+- `docs/DECISIONS.md` — les décisions de conception argumentées
+- `docs/IA.md` — utilisation de l'IA générative, ce qui a été retenu et rejeté

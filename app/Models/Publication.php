@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,5 +52,35 @@ class Publication extends Model
     public function reponseRetenue(): BelongsTo
     {
         return $this->belongsTo(Reponse::class, 'reponse_retenue_id');
+    }
+
+    // -------------------------------------------------------------- Scopes
+    // Un scope est un morceau de requete reutilisable. La regle metier est
+    // ecrite une seule fois ici, au lieu d'etre recopiee dans chaque controleur.
+
+    /**
+     * Le cloisonnement : on ne voit que les publications de sa promotion.
+     */
+    public function scopeDeLaPromotion(Builder $query, int $promotionId): void
+    {
+        $query->where('promotion_id', $promotionId);
+    }
+
+    /**
+     * Les publications reellement affichables dans le fil.
+     */
+    public function scopeVisibles(Builder $query): void
+    {
+        $query->where('statut', 'publie');
+    }
+
+    public function scopeQuestions(Builder $query): void
+    {
+        $query->where('type', 'question');
+    }
+
+    public function scopePosts(Builder $query): void
+    {
+        $query->where('type', 'post');
     }
 }

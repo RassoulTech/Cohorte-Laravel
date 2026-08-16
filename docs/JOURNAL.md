@@ -43,3 +43,59 @@ J'ai démarré MySQL depuis XAMPP Control Panel, vérifié l'écoute du port ave
 `netstat -an | grep 3306`, puis ajouté `/c/xampp/mysql/bin` au `PATH` dans
 `~/.bashrc`. J'ai compris au passage que le `PATH` est simplement la liste des
 dossiers dans lesquels le shell cherche un exécutable.
+
+---
+
+## Phase 1 — Le modèle de données et les relations Eloquent
+
+### Ce que j'ai fait
+
+J'ai écrit les six migrations du schéma : `promotions`, l'ajout de
+`promotion_id`, `role` et `points` sur `users`, `publications`, `reponses`,
+`signalements`, `appels_ia`, plus une migration séparée pour la colonne
+`reponse_retenue_id`. J'ai ensuite renseigné les `$fillable`, les `casts()`, les
+relations Eloquent (`membres`, `publications`, `auteur`, `promotion`,
+`reponses`, `signalements`, `reponseRetenue`, `appelsIa`) et les quatre scopes
+`visibles`, `deLaPromotion`, `questions`, `posts`. J'ai enfin activé
+`Model::preventLazyLoading()` en développement dans `AppServiceProvider`.
+
+### Pourquoi je l'ai fait ainsi
+
+Les posts et les questions partagent le même auteur, la même promotion, le même
+statut de modération et la même possibilité d'être signalés : je les garde dans
+une seule table `publications` distinguée par une colonne `type`, et j'isole les
+questions avec le scope `questions()`. Deux tables m'auraient obligé à écrire
+deux fois la logique de modération et de signalement. Les règles de lecture sont
+dans des scopes et non recopiées dans les contrôleurs : le jour où la règle de
+cloisonnement change, je n'ai qu'un seul endroit à modifier. Enfin, l'unicité
+`(publication_id, user_id)` sur `signalements` est posée en base et pas seulement
+en PHP : la base doit rendre le doublon impossible même si le contrôle applicatif
+est contourné.
+
+### Difficulté rencontrée
+
+Trois choses m'ont bloqué. D'abord `php artisan make:model AppelIa -m` a généré
+une table nommée `appel_ias`, alors que le cahier des charges demande
+`appels_ia`. Ensuite, la colonne `reponse_retenue_id` de `publications` pointe
+vers `reponses`, table qui n'existe pas encore au moment où `publications` est
+créée : la migration échouait sur la clé étrangère. Enfin, mes migrations vides
+avaient déjà été jouées, donc les modifier ne changeait plus rien à la base.
+
+### Comment je l'ai résolue
+
+J'ai renommé le fichier de migration en `create_appels_ia_table` et déclaré
+`protected $table = 'appels_ia';` dans le modèle, pour que le nom de table reste
+celui du cahier des charges même si Laravel en devinait un autre. Pour la
+réponse retenue, j'ai créé une migration postérieure
+`add_reponse_retenue_to_publications_table` qui ajoute la clé étrangère une fois
+`reponses` créée — c'est le seul moyen de sortir d'une référence circulaire entre
+deux tables. Et j'ai rejoué toute la base avec `php artisan migrate:fresh`, qui
+supprime les tables et rejoue les migrations dans l'ordre des horodatages.
+
+J'ai vérifié le tout dans Tinker : `$p->membres()->count()` renvoie bien `1`,
+`$u->promotion->nom` renvoie `"Test"`, un second signalement identique lève une
+`UniqueConstraintViolationException`, et parcourir des publications sans
+`with('auteur')` lève une `LazyLoadingViolationException`. J'ai découvert à cette
+occasion que ce garde-fou ne se déclenche que sur une collection de plusieurs
+enregistrements : sur un modèle seul, il n'y a pas de N+1 possible, donc Laravel
+laisse passer.

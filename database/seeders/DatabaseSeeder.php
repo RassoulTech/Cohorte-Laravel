@@ -67,5 +67,52 @@ class DatabaseSeeder extends Seeder
                         ->create(['publication_id' => $question->id]);
                 });
         }
+
+        $this->comptesDeDemonstration($groupeA, $groupeB);
+    }
+
+    /**
+     * Les quatre comptes OBLIGATOIRES du cahier des charges.
+     * Adresses et mot de passe imposes : le correcteur s'en sert tel quel.
+     */
+    private function comptesDeDemonstration(Promotion $a, Promotion $b): void
+    {
+        // Apprenante du groupe A : le point de depart du test de cloisonnement.
+        User::factory()->create([
+            'name' => 'Awa Diop',
+            'email' => 'awa@cohorte.test',
+            'password' => Hash::make('password'),
+            'promotion_id' => $a->id,
+            'role' => 'apprenant',
+        ]);
+
+        // Delegue du groupe A : il accedera a la file de moderation (phase 8).
+        User::factory()->create([
+            'name' => 'Moussa Ba',
+            'email' => 'moussa@cohorte.test',
+            'password' => Hash::make('password'),
+            'promotion_id' => $a->id,
+            'role' => 'delegue',
+        ]);
+
+        // Apprenante du groupe B : c'est avec elle que le correcteur essaiera
+        // d'atteindre une publication d'Awa. Resultat attendu : 403.
+        User::factory()->create([
+            'name' => 'Fatou Sow',
+            'email' => 'fatou@cohorte.test',
+            'password' => Hash::make('password'),
+            'promotion_id' => $b->id,
+            'role' => 'apprenant',
+        ]);
+
+        // Enseignant : promotion_id volontairement null. C'est ce cas qui
+        // justifie le middleware ExigePromotion de la phase 4.
+        User::factory()->create([
+            'name' => 'Formateur',
+            'email' => 'formateur@cohorte.test',
+            'password' => Hash::make('password'),
+            'promotion_id' => null,
+            'role' => 'enseignant',
+        ]);
     }
 }

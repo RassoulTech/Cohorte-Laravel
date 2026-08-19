@@ -64,7 +64,34 @@ pilotables depuis le `.env`, sans toucher au code :
 
 ## Comptes de démonstration
 
-*Disponibles à partir de la phase 2, avec `php artisan migrate:fresh --seed`.*
+Reconstruire la base et la remplir :
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Le mot de passe est `password` pour les quatre comptes.
+
+| Adresse | Rôle | Promotion | Sert à démontrer |
+|---|---|---|---|
+| `awa@cohorte.test` | apprenant | Groupe A (`DWA2026`) | le parcours normal d'un membre |
+| `moussa@cohorte.test` | délégué | Groupe A (`DWA2026`) | la file de modération |
+| `fatou@cohorte.test` | apprenant | Groupe B (`DWB2026`) | le cloisonnement entre promotions |
+| `formateur@cohorte.test` | enseignant | *aucune* | la consultation sans publication |
+
+Les deux codes d'invitation, pour tester l'inscription : `DWA2026` et `DWB2026`.
+
+### Vérifier le cloisonnement
+
+1. Se connecter avec `awa@cohorte.test` et relever l'identifiant d'une publication.
+2. Se déconnecter, se connecter avec `fatou@cohorte.test`.
+3. Saisir directement `/publications/{id}` dans le navigateur.
+4. Résultat attendu : **erreur 403**.
+
+### Le jeu de données généré
+
+Pour chacune des deux promotions : 8 membres, 15 publications et 6 questions
+avec de 0 à 3 réponses chacune, réparties sur les trente derniers jours.
 
 ## Clés OpenRouter
 

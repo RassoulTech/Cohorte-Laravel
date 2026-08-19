@@ -50,3 +50,41 @@ volontiers du code qui « a l'air » du guide sans tenir compte de l'état réel
 projet : routes qui n'existent pas encore, noms de tables approximatifs, tests
 mal construits. Chaque bloc a été relu et vérifié dans Tinker avant d'être
 commité.
+
+---
+
+## Phase 2 — Factories et seeders
+
+### Ce que j'ai demandé
+
+Le remplissage des trois `definition()`, les états `question()` et
+`enModeration()`, et la structure du seeder à partir de l'exemple du guide.
+
+### Ce que j'ai retenu
+
+- La structure générale du seeder du guide : deux promotions, une boucle
+  appliquant la même recette à chacune, puis les comptes de démonstration
+  isolés dans une méthode privée.
+- `strtoupper(fake()->unique()->bothify('??####'))` pour le code d'invitation.
+  Le `unique()` est indispensable : la colonne porte une contrainte unique en
+  base, et deux tirages identiques feraient échouer le seed.
+- `recycle($membres)` pour éviter les utilisateurs fantômes.
+
+### Ce que j'ai rejeté
+
+- **Un seeder qui n'utilisait pas `recycle()`.** La version proposée créait un
+  auteur par publication, soit plus de cent utilisateurs. Le jeu de
+  démonstration devenait inutilisable : aucun membre n'avait publié deux fois,
+  et le futur calcul de réputation de la phase 10 n'aurait rien mesuré.
+- **Des codes d'invitation générés aléatoirement pour les deux promotions du
+  seeder.** Ils doivent être écrits en dur : le README les publie et le
+  correcteur s'en sert pour tester l'inscription par code. Un code différent à
+  chaque `migrate:fresh --seed` rendrait le README faux.
+- **Un `PublicationSeeder` séparé.** Le guide le cite dans un exemple de
+  commande, mais tout le jeu de données tient dans `DatabaseSeeder` sans
+  duplication. Créer une classe de plus aurait ajouté un fichier sans ajouter
+  de clarté.
+- **La suppression de `'created_at'` de la factory**, au motif que Laravel gère
+  déjà les horodatages. C'est vrai, mais il les met tous à l'instant présent :
+  le fil de la phase 5 serait alors trié au hasard et je ne pourrais pas
+  vérifier mon `latest()`.

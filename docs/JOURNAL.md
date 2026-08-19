@@ -99,3 +99,61 @@ J'ai vérifié le tout dans Tinker : `$p->membres()->count()` renvoie bien `1`,
 occasion que ce garde-fou ne se déclenche que sur une collection de plusieurs
 enregistrements : sur un modèle seul, il n'y a pas de N+1 possible, donc Laravel
 laisse passer.
+
+---
+
+## Phase 2 — Factories et seeders
+
+Branche : `feat/02-seeders`
+Dates : 18 au 19 août 2026
+
+### Ce que j'ai fait
+
+J'ai rempli les trois factories générées au jour 1 par `make:model -mf`
+(`PromotionFactory`, `PublicationFactory`, `ReponseFactory`), puis réécrit
+`DatabaseSeeder` pour construire un jeu de démonstration complet. Le seeder crée
+deux promotions distinctes, `DWA2026` et `DWB2026`, et applique à chacune la même
+recette : huit membres, quinze publications, six questions avec de zéro à trois
+réponses. Il ajoute ensuite les quatre comptes obligatoires du cahier des charges,
+dont deux dans des promotions différentes et un enseignant sans promotion. Enfin
+j'ai documenté ces comptes et les deux codes d'invitation dans le README.
+
+### Pourquoi je l'ai fait ainsi
+
+La factory décrit à quoi ressemble un objet typique, le seeder décide combien en
+créer et pour qui : je n'ai donc mis aucune quantité dans les factories, et aucune
+description d'objet dans le seeder. Les deux codes d'invitation sont écrits en dur
+dans le seeder plutôt que générés au hasard, parce qu'ils doivent figurer dans le
+README et servir au correcteur pour tester l'inscription. J'ai ajouté
+`'created_at' => fake()->dateTimeBetween('-30 days')` dans la factory des
+publications : sans cela, les quarante-deux publications auraient le même
+horodatage à la seconde près et le tri du fil de la phase 5 serait invérifiable.
+J'ai aussi mis les réponses à un nombre aléatoire entre zéro et trois pour que
+certaines questions restent sans réponse, cas que l'affichage devra gérer.
+
+### Difficulté rencontrée
+
+Ma première version du seeder produisait plus de cent utilisateurs au lieu de
+vingt. Chaque publication créait son propre auteur, si bien que personne n'avait
+écrit deux publications et que le jeu de démonstration n'avait aucun sens.
+
+### Comment je l'ai résolue
+
+Le coupable était la ligne `'user_id' => User::factory()` du `definition()` : elle
+signifie « si personne ne me fournit d'auteur, fabrique-en un », et c'est ce
+qu'elle faisait quarante-deux fois. La solution est `->recycle($membres)`, qui
+fournit à la factory un vivier de modèles déjà créés dans lequel elle pioche au
+lieu d'en fabriquer. J'ai vérifié en comptant : vingt utilisateurs exactement,
+soit huit plus huit membres et les quatre comptes de démonstration.
+
+J'ai découvert au passage que les factories court-circuitent volontairement
+`$fillable` : `created_at` n'y figure pas et se remplit quand même. C'est logique,
+puisqu'une factory vient du code du projet et non d'un formulaire — la protection
+contre l'assignation de masse n'a pas lieu de s'appliquer là.
+
+`php artisan migrate:fresh --seed` passe sans erreur et produit deux promotions,
+vingt utilisateurs, quarante-deux publications dont trente posts et douze
+questions, et dix-sept réponses. Le scope `deLaPromotion()` renvoie bien vingt et
+une publications de chaque côté, jamais quarante-deux : les deux jeux de contenu
+sont strictement séparés, ce qui rendra possible le test d'accès direct par URL de
+la phase 5.

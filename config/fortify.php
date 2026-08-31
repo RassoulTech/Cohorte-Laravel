@@ -73,7 +73,9 @@ return [
     |
     */
 
-    'home' => '/home',
+    // Provisoire : le fil '/publications' n'existera qu'en phase 5.
+    // Rediriger vers une route inexistante donnerait un 404 apres connexion.
+    'home' => '/',
 
     /*
     |--------------------------------------------------------------------------
@@ -164,17 +166,15 @@ return [
     'features' => [
         Features::registration(),
         Features::resetPasswords(),
-        // Features::emailVerification(),
         Features::updateProfileInformation(),
         Features::updatePasswords(),
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0,
-        ]),
-        Features::passkeys([
-            'confirmPassword' => true,
-        ]),
+
+        // Hors perimetre du cahier des charges Cohorte. Chaque ligne activee
+        // cree des routes ; les laisser ouvertes sans ecrire les vues
+        // correspondantes provoquerait des erreurs.
+        // Features::emailVerification(),
+        // Features::twoFactorAuthentication(['confirm' => true, 'confirmPassword' => true]),
+        // Features::passkeys(['confirmPassword' => true]),
     ],
 
 ];

@@ -31,6 +31,25 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
+        // --------------------------------------------------------- Les vues
+        // Fortify est "frontend agnostic" : il ne fournit aucune vue et ne fait
+        // aucune hypothese sur l'interface. Chaque route GET d'authentification
+        // a besoin qu'on lui indique quel fichier Blade afficher.
+        Fortify::loginView(fn () => view('auth.login'));
+        Fortify::registerView(fn () => view('auth.register'));
+        Fortify::requestPasswordResetLinkView(fn () => view('auth.forgot-password'));
+
+        // Cette vue-ci recoit la requete : elle porte le jeton de
+        // reinitialisation et l'adresse e-mail, a replacer en champs caches.
+        Fortify::resetPasswordView(fn (Request $request) => view('auth.reset-password', [
+            'request' => $request,
+        ]));
+
+        // La route GET /user/confirm-password existe des que la fonctionnalite
+        // updatePasswords est active. Sans vue declaree, l'ouvrir provoquerait
+        // une erreur : on lui en donne une.
+        Fortify::confirmPasswordView(fn () => view('auth.confirm-password'));
+
         // ------------------------------------- La limitation des tentatives
         // Sans limitation, un attaquant peut essayer des milliers de mots de
         // passe a la seconde sur une adresse connue.

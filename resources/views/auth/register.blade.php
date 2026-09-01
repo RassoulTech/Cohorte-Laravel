@@ -28,6 +28,21 @@
         </div>
 
         <div class="champ">
+            {{-- C'est ce champ qui rattache le nouveau membre a sa promotion.
+                 Sa verification a lieu dans app/Actions/Fortify/CreateNewUser.php. --}}
+            <label for="code_invitation">Code d'invitation de votre promotion</label>
+            <input id="code_invitation" type="text" name="code_invitation"
+                   value="{{ old('code_invitation') }}" required
+                   placeholder="ex. DWA2026">
+
+            {{-- ValidationException::withMessages() rattache l'erreur a ce champ
+                 precis : elle s'affiche donc ici, et non en haut de page. --}}
+            @error('code_invitation')
+                <p class="erreur">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="champ">
             <label for="password">Mot de passe</label>
             <input id="password" type="password" name="password" required>
 

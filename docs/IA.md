@@ -88,3 +88,45 @@ Le remplissage des trois `definition()`, les états `question()` et
   déjà les horodatages. C'est vrai, mais il les met tous à l'instant présent :
   le fil de la phase 5 serait alors trié au hasard et je ne pourrais pas
   vérifier mon `latest()`.
+
+---
+
+## Phase 3 — L'authentification avec Fortify
+
+### Ce que j'ai demandé
+
+La structure des vues Blade d'authentification, la configuration de Fortify, et
+la vérification du code d'invitation dans `CreateNewUser`.
+
+### Ce que j'ai retenu
+
+- La logique de `CreateNewUser` telle que le guide la décrit : valider, chercher
+  la promotion, refuser avec `ValidationException::withMessages()` pour que
+  l'erreur se rattache au champ, puis créer l'utilisateur rattaché.
+- Les trois éléments obligatoires de chaque formulaire : `@csrf`, `old()` et le
+  couple `for` / `id`.
+- La distinction entre les deux refus, code inconnu et promotion fermée.
+
+### Ce que j'ai rejeté
+
+- **Le code du guide recopié sur `config/fortify.php` sans lire le fichier
+  publié.** Fortify 1.39 active `twoFactorAuthentication()` et `passkeys()` par
+  défaut, deux fonctionnalités hors périmètre que le guide ne mentionne pas
+  parce qu'il décrit une version antérieure. Je les ai désactivées et vérifié
+  avec `route:list` que leurs routes disparaissaient.
+- **Réécrire le `RateLimiter::for('login')` que le guide fait écrire.** Il est
+  déjà présent dans le fichier publié par `fortify:install`, avec exactement la
+  bonne valeur. Le recopier par-dessus aurait produit un commit mensonger : je
+  ne l'ai pas écrit, je l'ai lu, vérifié, commenté et testé. En revanche j'ai
+  supprimé les limiteurs `two-factor` et `passkeys`, devenus du code mort après
+  la désactivation de leurs fonctionnalités.
+- **`'home' => '/publications'`.** Le guide le demande, mais cette route
+  n'existera qu'en phase 5 : se connecter aujourd'hui renverrait un 404. J'ai mis
+  `/` avec un commentaire indiquant quand le changer. C'est le même défaut que le
+  gabarit de la phase 0, qui renvoyait vers des routes futures.
+- **S'en tenir aux quatre vues du guide.** La fonctionnalité `updatePasswords`
+  déclare aussi une route `GET /user/confirm-password`. Sans vue déclarée, elle
+  provoque une erreur — et c'est une route qu'un correcteur voit dans
+  `route:list`. J'ai écrit la cinquième vue.
+- **Laisser les messages de validation en anglais.** Ils s'affichent dans un
+  formulaire entièrement en français.

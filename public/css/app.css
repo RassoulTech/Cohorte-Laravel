@@ -120,3 +120,54 @@ button {
 button:hover {
     background: #24558a;
 }
+
+/* ------------------------------------------------ Formulaires (phase 3) */
+
+input[type="text"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #cbd2d9;
+    border-radius: 4px;
+    font: inherit;
+}
+
+.champ {
+    margin-bottom: 1rem;
+}
+
+.champ label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+/* Une case a cocher garde son etiquette sur la meme ligne. */
+.champ label.case {
+    display: inline;
+    font-weight: 400;
+}
+
+.champ label.case input {
+    width: auto;
+}
+
+/* Message d'erreur affiche SOUS le champ concerne, grace a @error(). */
+.erreur {
+    margin: 0.25rem 0 0;
+    color: #9b2c2c;
+    font-size: 0.9rem;
+}
+
+.liens {
+    margin-top: 1.5rem;
+}
+
+.liens .bouton {
+    display: inline-block;
+    margin-right: 0.75rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    background: #2b6cb0;
+    color: #fff;
+    text-decoration: none;
+}

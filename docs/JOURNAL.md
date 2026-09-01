@@ -157,3 +157,81 @@ questions, et dix-sept réponses. Le scope `deLaPromotion()` renvoie bien vingt 
 une publications de chaque côté, jamais quarante-deux : les deux jeux de contenu
 sont strictement séparés, ce qui rendra possible le test d'accès direct par URL de
 la phase 5.
+
+---
+
+## Phase 3 — L'authentification avec Laravel Fortify
+
+Branche : `feat/03-authentification-fortify`
+Dates : 24 août 2026
+
+### Ce que j'ai fait
+
+J'ai installé Laravel Fortify, réduit ses fonctionnalités à l'inscription, la
+réinitialisation de mot de passe et la mise à jour du profil, puis écrit
+moi-même les six vues Blade correspondantes. J'ai déclaré ces vues dans
+`FortifyServiceProvider`, branché la vérification du code d'invitation dans
+`app/Actions/Fortify/CreateNewUser.php`, et placé toute l'application derrière le
+middleware `auth` en ne laissant public que l'accueil. Un nouveau membre qui
+saisit `DWA2026` est désormais créé avec le rôle `apprenant` et rattaché
+automatiquement à sa promotion.
+
+### Pourquoi je l'ai fait ainsi
+
+Fortify plutôt que Breeze parce qu'il fournit les mécanismes de sécurité qu'il ne
+faut jamais réécrire — hachage, régénération de l'identifiant de session contre la
+fixation, limitation des tentatives, jetons de réinitialisation à usage unique —
+sans fournir les vues. Breeze m'aurait donné les deux et je n'aurais rien appris
+du jeton CSRF, de `old()` ni de l'affichage des erreurs.
+
+Pour refuser un code d'invitation, j'utilise
+`ValidationException::withMessages()` plutôt qu'une redirection avec un message
+flash : l'erreur est ainsi rattachée au champ `code_invitation` et remonte dans
+`$errors`, donc la vue l'affiche sous le bon champ avec `@error()` sans code
+supplémentaire. J'ai aussi distingué deux refus, le code inconnu et la promotion
+fermée, parce qu'ils ne se corrigent pas de la même façon côté utilisateur.
+
+### La difficulté rencontrée
+
+Le guide décrit Fortify tel qu'il était dans une version antérieure, et la
+version installée, la 1.39, en diffère sur quatre points. Elle tire
+`laravel/passkeys` et active `twoFactorAuthentication()` et `passkeys()` par
+défaut, deux fonctionnalités hors périmètre. Elle fournit déjà le
+`RateLimiter::for('login')` à cinq tentatives par minute que le guide me demande
+d'écrire. Sa valeur `home` par défaut est `/home` et non `/publications`. Et elle
+déclare une route `GET /user/confirm-password` pour laquelle aucune vue n'est
+prévue.
+
+### Comment je l'ai résolue
+
+J'ai lu les fichiers publiés avant de suivre le guide, au lieu de recopier son
+code par-dessus. J'ai commenté `twoFactorAuthentication()` et `passkeys()` dans
+`features`, puis vérifié avec `php artisan route:list` que les routes
+`passkeys/login` et `two-factor-challenge` avaient bien disparu ; leurs limiteurs
+étant devenus du code mort, je les ai supprimés du provider dans un commit
+`refactor` distinct. Je n'ai pas réécrit le limiteur `login` déjà présent : je
+l'ai relu, vérifié qu'il correspondait à l'exigence, et commenté le choix de sa
+clé, qui combine l'adresse e-mail et l'adresse IP — l'e-mail seul permettrait de
+bloquer volontairement le compte d'un tiers, l'IP seule bloquerait toute une
+promotion derrière le même routeur.
+
+Pour `home`, j'ai mis `/` provisoirement, avec un commentaire : `/publications`
+n'existera qu'en phase 5 et se connecter donnerait un 404. Et j'ai écrit une
+sixième vue, `confirm-password`, que le guide ne mentionne pas, pour qu'un
+correcteur qui ouvre cette route après avoir lu `route:list` ne tombe pas sur une
+erreur.
+
+J'ai vérifié les six situations demandées. L'inscription avec `DWA2026` crée bien
+un apprenant rattaché au groupe A ; un code inexistant et une promotion fermée
+affichent chacun leur message sous le champ ; une adresse déjà utilisée est
+refusée ; la connexion d'Awa redirige vers l'accueil qui affiche son nom ; et
+`/user/confirm-password` renvoie une redirection vers `/login` quand on n'est pas
+connecté, ce qui confirme que le middleware `auth` fait son travail. Sur la
+limitation, j'ai observé un décalage d'un cran par rapport au guide : avec
+`Limit::perMinute(5)`, c'est la septième tentative qui reçoit un 429, pas la
+sixième. La règle exigée est bien en place, c'est la mécanique interne du
+compteur de Laravel qui décale le seuil.
+
+J'ai enfin traduit les messages de validation, Laravel n'étant pas livré en
+français : un formulaire francophone qui répond « The email has already been
+taken » n'est pas acceptable.

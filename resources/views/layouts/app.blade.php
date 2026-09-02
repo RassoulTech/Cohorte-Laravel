@@ -14,7 +14,12 @@
             <nav>
                 {{-- Les liens Fil et Entraide seront ajoutes ici avec leurs
                      routes, en phases 5 et 6. --}}
-                <span>{{ auth()->user()->name }}</span>
+
+                @if (auth()->user()->estEnseignant())
+                    <a href="{{ route('enseignant.promotions.index') }}">Les promotions</a>
+                @endif
+
+                <a href="{{ route('profil.show') }}">{{ auth()->user()->name }}</a>
 
                 @if (Route::has('logout'))
                     <form method="POST" action="{{ route('logout') }}">

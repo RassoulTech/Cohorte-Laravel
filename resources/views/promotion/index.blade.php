@@ -24,6 +24,12 @@
                 {{ $promotion->membres_count }} membre(s) —
                 {{ $promotion->publications_count }} publication(s)
             </p>
+
+            <p class="liens">
+                <a href="{{ route('enseignant.promotions.fil', $promotion) }}" class="bouton">
+                    Voir le fil
+                </a>
+            </p>
         </article>
     @empty
         <p class="vide">Aucune promotion enregistrée pour l'instant.</p>

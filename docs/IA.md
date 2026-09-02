@@ -130,3 +130,31 @@ la vérification du code d'invitation dans `CreateNewUser`.
   `route:list`. J'ai écrit la cinquième vue.
 - **Laisser les messages de validation en anglais.** Ils s'affichent dans un
   formulaire entièrement en français.
+
+---
+
+## Phase 4 — Adhésion à une promotion
+
+### Ce que j'ai retenu
+
+- La structure du middleware `ExigePromotion` telle que le guide la décrit, et
+  la déclaration de son alias dans `bootstrap/app.php`, `Kernel.php` n'existant
+  plus depuis Laravel 11.
+- Le placement des routes de `/rejoindre` hors du groupe `promotion`.
+
+### Ce que j'ai rejeté
+
+- **Le middleware du guide recopié tel quel.** Il redirige l'enseignant vers
+  `route('enseignant.promotions.index')`, une route que le guide ne fait jamais
+  créer : un enseignant qui se connecte déclenche une `RouteNotFoundException`.
+  J'ai écrit le contrôleur et la vue manquants.
+- **Protéger la page de l'enseignant par un simple `@if` dans le gabarit.**
+  Cacher un lien n'empêche personne d'appeler la route directement. J'ai mis
+  `abort_unless(...->estEnseignant(), 403)` dans le contrôleur, et vérifié
+  qu'Awa reçoit bien un 403.
+- **Distinguer « code inconnu » et « promotion fermée » dans les messages.**
+  Deux messages différents indiqueraient à un inconnu qu'une promotion porte ce
+  code. Un seul refus commun ne coûte rien à l'utilisateur légitime.
+- **Afficher `$membre->promotion->nom` sans précaution sur la page de profil.**
+  L'enseignant n'a pas de promotion : sans l'opérateur `?->`, la page lève
+  « Attempt to read property on null ».

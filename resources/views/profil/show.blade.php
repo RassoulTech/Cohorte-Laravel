@@ -33,7 +33,10 @@
         <p><strong>Points de contribution :</strong> {{ $membre->points }}</p>
     </article>
 
-    @unless ($membre->promotion_id)
+    {{-- L'enseignant n'a pas de promotion et ne doit pas en rejoindre une : on
+         ne lui propose donc pas le lien. La regle est aussi appliquee cote
+         controleur, l'affichage ne protege rien a lui seul. --}}
+    @unless ($membre->promotion_id || $membre->estEnseignant())
         <p class="liens">
             <a href="{{ route('promotion.rejoindre') }}" class="bouton">Rejoindre une promotion</a>
         </p>

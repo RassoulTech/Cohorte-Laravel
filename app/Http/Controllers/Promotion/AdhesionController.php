@@ -16,13 +16,17 @@ use Illuminate\View\View;
  */
 class AdhesionController extends Controller
 {
-    public function create(): View
+    public function create(Request $request): View
     {
+        $this->refuserAuxEnseignants($request);
+
         return view('promotion.rejoindre');
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->refuserAuxEnseignants($request);
+
         $donnees = $request->validate([
             'code_invitation' => ['required', 'string', 'max:12'],
         ]);
@@ -47,5 +51,22 @@ class AdhesionController extends Controller
         return redirect()
             ->route('profil.show')
             ->with('succes', 'Bienvenue dans la promotion ' . $promotion->nom . '.');
+    }
+
+    /**
+     * Un enseignant n'appartient a aucune promotion, par nature : le cahier des
+     * charges lui donne un seul droit, consulter toutes les promotions.
+     *
+     * Sans ce garde-fou, il pouvait saisir un code d'invitation et recevoir un
+     * promotion_id qui ne lui servait a rien, puisque ExigePromotion teste son
+     * role AVANT la promotion et le renvoie de toute facon vers son module. On
+     * ecrivait donc en base une donnee fausse, en silence.
+     *
+     * La verification est ici, dans le controleur, et pas seulement dans la vue :
+     * masquer un bouton n'empeche personne d'appeler la route directement.
+     */
+    private function refuserAuxEnseignants(Request $request): void
+    {
+        abort_if($request->user()->estEnseignant(), 403);
     }
 }

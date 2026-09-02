@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Feed\PublicationController;
 use App\Http\Controllers\Profil\ProfilController;
 use App\Http\Controllers\Promotion\AdhesionController;
 use App\Http\Controllers\Promotion\PromotionController;
@@ -28,6 +29,11 @@ Route::middleware('auth')->group(function () {
     // middleware ExigePromotion le redirige.
     Route::get('/promotions', [PromotionController::class, 'index'])
         ->name('enseignant.promotions.index');
+
+    // Le fil d'une promotion vu par l'enseignant. Volontairement hors du
+    // groupe 'promotion' : n'ayant pas de promotion_id, il y serait redirige.
+    Route::get('/promotions/{promotion}/fil', [PromotionController::class, 'fil'])
+        ->name('enseignant.promotions.fil');
 });
 
 /*
@@ -39,5 +45,9 @@ Route::middleware('auth')->group(function () {
 | phases 5 a 10 viendront ici.
 */
 Route::middleware(['auth', 'promotion'])->group(function () {
-    //
+    // Route::resource declare les 7 routes conventionnelles d'un coup. On
+    // restreint aux 5 utiles : une publication ne se modifie pas, elle se
+    // supprime. Verifiable avec php artisan route:list --name=publications
+    Route::resource('publications', PublicationController::class)
+        ->only(['index', 'create', 'store', 'show', 'destroy']);
 });

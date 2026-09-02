@@ -171,3 +171,34 @@ input[type="text"] {
     color: #fff;
     text-decoration: none;
 }
+
+/* ------------------------------------------------- Cartes et listes vides */
+
+.carte {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #e1e5ea;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.carte h3 {
+    margin-top: 0;
+}
+
+.carte p {
+    margin: 0.35rem 0;
+}
+
+/* Message affiche a la place d'une liste vide : jamais de page blanche. */
+.vide {
+    padding: 1rem;
+    border: 1px dashed #cbd2d9;
+    border-radius: 6px;
+    color: #5a6672;
+}
+
+.barre nav a {
+    margin-left: 1rem;
+    color: #fff;
+}

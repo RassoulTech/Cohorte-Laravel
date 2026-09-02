@@ -235,3 +235,74 @@ compteur de Laravel qui décale le seuil.
 J'ai enfin traduit les messages de validation, Laravel n'étant pas livré en
 français : un formulaire francophone qui répond « The email has already been
 taken » n'est pas acceptable.
+
+---
+
+## Phase 4 — Rejoindre une promotion et le profil
+
+Branche : `feat/04-adhesion-promotion`
+Dates : 2 septembre 2026
+
+### Ce que j'ai fait
+
+J'ai créé le middleware `ExigePromotion`, déclaré son alias `promotion` dans
+`bootstrap/app.php`, et ouvert un groupe de routes `['auth', 'promotion']` qui
+accueillera le fil et l'entraide des phases suivantes. J'ai écrit la page
+`/rejoindre` qui permet de saisir un code d'invitation après coup, la page de
+profil, et un module de consultation pour l'enseignant listant toutes les
+promotions avec leur nombre de membres et de publications.
+
+### Pourquoi je l'ai fait ainsi
+
+Le middleware existe pour établir une invariante : toute route qu'il traverse est
+certaine de recevoir un utilisateur dont `promotion_id` n'est pas `null`. Sans
+cette garantie, l'appel `->deLaPromotion($request->user()->promotion_id)` de la
+phase 5 recevrait `null` et lèverait une `TypeError`, puisque le scope est typé
+`int`. On vérifie une fois, en amont, ce que tout le code en aval tient pour
+acquis.
+
+Les routes de `/rejoindre` sont volontairement placées hors du groupe
+`promotion` : c'est la page vers laquelle on envoie ceux qui n'ont pas de
+promotion, la protéger par ce middleware créerait une boucle de redirection
+infinie.
+
+Dans `AdhesionController::store()`, je filtre sur `ouverte` dès la requête, si
+bien qu'une promotion fermée et un code inconnu produisent le même message. Ce
+n'est pas de la paresse : distinguer les deux révélerait à un inconnu qu'une
+promotion porte ce code.
+
+### La difficulté rencontrée
+
+Le middleware du guide redirige l'enseignant vers
+`route('enseignant.promotions.index')`, mais aucune section du guide ne fait
+créer cette route. Un enseignant qui se connectait déclenchait donc une
+`RouteNotFoundException`. C'est le troisième endroit où le guide référence du
+code d'une étape ultérieure, après les liens du gabarit en phase 0 et
+`home => '/publications'` en phase 3.
+
+Mes tests en ligne de commande échouaient par ailleurs sur une erreur 419, alors
+que les mêmes actions fonctionnaient dans le navigateur.
+
+### Comment je l'ai résolue
+
+J'ai écrit le module manquant : un `PromotionController` réservé à l'enseignant,
+protégé par `abort_unless($request->user()->estEnseignant(), 403)`, et sa vue.
+Le cahier des charges le demande de toute façon, puisque l'enseignant doit
+pouvoir consulter toutes les promotions sans jamais publier. J'ai vérifié qu'Awa,
+simple apprenante, reçoit bien un 403 sur cette route.
+
+Le 419 venait de mon script de test, pas de l'application : depuis que
+l'utilisateur est connecté, le gabarit affiche le formulaire de déconnexion, qui
+porte son propre `@csrf`. Mon extraction du jeton en récupérait donc deux, collés
+l'un à l'autre, et le jeton envoyé était invalide. Ajouter `head -1` a suffi.
+La leçon est qu'une erreur 419 ne signifie pas toujours un `@csrf` manquant :
+elle signifie que le jeton reçu ne correspond pas à la session, ce qui inclut le
+cas d'un jeton mal transmis.
+
+J'ai vérifié les sept situations. Le formateur, qui n'a pas de promotion, est
+dirigé vers la liste des promotions et voit ses deux groupes avec leurs
+compteurs. Awa passe normalement et reçoit un 403 sur le module enseignant. Un
+visiteur non connecté est redirigé vers `/login` sur les trois routes. Un membre
+sans promotion qui saisit `ZZZZ0000` ou le code d'une promotion fermée obtient le
+même refus, et `DWA2026` le rattache avec un message de bienvenue visible sur son
+profil.

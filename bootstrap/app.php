@@ -11,7 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Depuis Laravel 11, app/Http/Kernel.php n'existe plus : les alias de
+        // middleware se declarent ici. L'alias est le nom court utilisable
+        // dans les routes, par exemple Route::middleware(['auth', 'promotion']).
+        $middleware->alias([
+            'promotion' => \App\Http\Middleware\ExigePromotion::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

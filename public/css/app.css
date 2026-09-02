@@ -202,3 +202,49 @@ input[type="text"] {
     margin-left: 1rem;
     color: #fff;
 }
+
+/* ------------------------------------------------------- Le fil (phase 5) */
+
+.entete-fil {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.meta {
+    color: #5a6672;
+    font-size: 0.9rem;
+}
+
+.etiquette {
+    display: inline-block;
+    margin: 0 0 0.5rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    background: #2b6cb0;
+    color: #fff;
+    font-size: 0.8rem;
+}
+
+.facultatif {
+    color: #5a6672;
+    font-weight: 400;
+}
+
+.bouton-danger {
+    background: #9b2c2c;
+}
+
+.bouton-danger:hover {
+    background: #7a2323;
+}
+
+/* Pagination generee par $publications->links() */
+.pagination {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+}

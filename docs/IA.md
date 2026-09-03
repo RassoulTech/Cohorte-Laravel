@@ -158,3 +158,36 @@ la vérification du code d'invitation dans `CreateNewUser`.
 - **Afficher `$membre->promotion->nom` sans précaution sur la page de profil.**
   L'enseignant n'a pas de promotion : sans l'opérateur `?->`, la page lève
   « Attempt to read property on null ».
+
+---
+
+## Phase 5 — Le fil et le cloisonnement
+
+### Ce que j'ai retenu
+
+- La `PublicationPolicy` du guide, y compris le cas d'une publication non
+  publiée qui reste visible pour son auteur.
+- La combinaison scope pour la liste, policy pour le détail.
+- Le `FormRequest` plutôt qu'une validation dans le contrôleur.
+
+### Ce que j'ai rejeté
+
+- **`$this->authorizeResource()` dans le constructeur**, que le guide fait
+  écrire. Sur Laravel 12, il lève `Call to undefined method
+  PublicationController::middleware()` : cette méthode a disparu de la classe
+  `Controller` de base en Laravel 11. Remplacé par des `$this->authorize()`
+  explicites, plus lisibles et démontrables ligne à ligne.
+- **`orderByDesc('epingle_le')` seul**, comme dans le corps du guide. Il repose
+  sur le fait que MySQL traite `NULL` comme la plus petite valeur ; PostgreSQL
+  fait l'inverse. J'ai ajouté `orderByRaw('epingle_le IS NULL')` avant, comme le
+  guide le suggère lui-même plus loin, pour un tri qui ne dépende pas du moteur.
+- **Afficher le contenu avec `{!! $publication->contenu !!}`** pour conserver les
+  retours à la ligne. C'est une faille XSS directe. J'utilise
+  `nl2br(e($publication->contenu))` : l'échappement a lieu avant la conversion
+  des sauts de ligne.
+- **Se contenter de `@can` dans la vue pour masquer le bouton Supprimer.**
+  Cacher un bouton n'empêche personne d'appeler la route. La vérification réelle
+  est `$this->authorize('delete', $publication)` dans le contrôleur.
+- **Laisser l'enseignant sans accès au fil.** Le guide ne prévoit pas de route
+  pour lui, alors que sa policy l'autorise à tout voir. Son rôle n'aurait eu
+  aucun sens.

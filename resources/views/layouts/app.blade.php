@@ -17,6 +17,8 @@
 
                 @if (auth()->user()->estEnseignant())
                     <a href="{{ route('enseignant.promotions.index') }}">Les promotions</a>
+                @elseif (auth()->user()->promotion_id)
+                    <a href="{{ route('publications.index') }}">Le fil</a>
                 @endif
 
                 <a href="{{ route('profil.show') }}">{{ auth()->user()->name }}</a>

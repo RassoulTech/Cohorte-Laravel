@@ -306,3 +306,77 @@ visiteur non connecté est redirigé vers `/login` sur les trois routes. Un memb
 sans promotion qui saisit `ZZZZ0000` ou le code d'une promotion fermée obtient le
 même refus, et `DWA2026` le rattache avec un message de bienvenue visible sur son
 profil.
+
+---
+
+## Phase 5 — Le fil de promotion et le cloisonnement
+
+Branche : `feat/05-fil-promotion`
+Dates : 2 septembre 2026
+
+### Ce que j'ai fait
+
+J'ai écrit la `PublicationPolicy`, un contrôleur de ressource restreint à cinq
+méthodes, un `FormRequest` de validation, le composant `carte-publication` et
+les trois vues du fil. Le fil affiche les publications de la promotion du membre
+connecté, paginées par quinze, les épinglées en tête. J'ai également ouvert à
+l'enseignant l'accès au fil de chaque promotion, via une route dédiée.
+
+### Pourquoi je l'ai fait ainsi
+
+Le cloisonnement repose sur deux protections complémentaires, et il faut les
+deux. Le scope `deLaPromotion()` filtre la liste ; la policy protège la page de
+détail. La liaison de modèle de route ne vérifie aucun droit : elle trouve la
+publication numéro 3 et la donne, que j'aie le droit de la voir ou non. Protéger
+seulement la liste laisserait passer une URL saisie à la main, protéger seulement
+le détail laisserait fuiter la liste.
+
+Dans `store()`, `promotion_id` vient de l'utilisateur connecté et jamais du
+formulaire. Un champ caché ajouté à la main permettrait sinon de publier dans une
+autre promotion.
+
+J'ai restreint `Route::resource` à cinq routes avec `->only()` : une publication
+ne se modifie pas, elle se supprime. Déclarer `edit` et `update` sans les écrire
+créerait deux routes mortes visibles dans `route:list`.
+
+### La difficulté rencontrée
+
+Le fil renvoyait une erreur 500 systématique :
+`Call to undefined method PublicationController::middleware()`, levée depuis
+`vendor/laravel/framework/.../AuthorizesRequests.php` ligne 104.
+
+Le guide fait pourtant écrire exactement ce code :
+`$this->authorizeResource(Publication::class, 'publication')` dans le
+constructeur.
+
+### Comment je l'ai résolue
+
+En remontant jusqu'au fichier de `vendor/` indiqué par la trace, j'ai vu que
+`authorizeResource()` construit des chaînes de middleware puis appelle
+`$this->middleware(...)`. Or depuis Laravel 11 la classe `Controller` de base est
+vide : cette méthode n'existe plus. Le guide signale lui-même que cette classe
+est vide, à propos du trait `AuthorizesRequests` à importer, sans voir que sa
+propre solution en dépendait.
+
+Deux remplacements étaient possibles : implémenter l'interface `HasMiddleware` et
+sa méthode statique `middleware()`, qui reproduit le mécanisme, ou appeler
+`$this->authorize()` explicitement dans chaque méthode. J'ai retenu le second.
+L'autorisation devient visible là où elle s'applique, au lieu d'être déduite
+d'une convention de nommage, et je peux montrer la ligne exacte qui bloque un
+accès.
+
+J'ai ensuite exécuté le test qui décide de la note. Awa, du groupe A, ouvre sa
+publication numéro 3 et reçoit 200 ; elle demande la publication 31, du groupe B,
+et reçoit 403. Fatou obtient l'inverse. Une suppression tentée par Fatou sur une
+publication du groupe A renvoie 403, et une publication inexistante renvoie 404 —
+la distinction est correcte : 404 signifie qu'elle n'existe pas, 403 qu'elle
+existe mais ne me regarde pas.
+
+J'ai enfin traité un point que le guide laisse en suspens. L'enseignant n'ayant
+pas de `promotion_id`, le middleware `ExigePromotion` le redirigeait avant qu'il
+n'atteigne `/publications`, alors que sa policy `view()` renvoie `true` : il
+devait donc pouvoir tout consulter sans jamais y accéder. J'ai ajouté une route
+`/promotions/{promotion}/fil`, hors du groupe `promotion`, réservée par
+`abort_unless(...->estEnseignant(), 403)`. Elle n'applique pas le scope
+`visibles()` : l'enseignant est un observateur et voit aussi ce qui est masqué ou
+en attente, ce qu'autorise déjà sa policy. Awa reçoit bien 403 sur cette route.

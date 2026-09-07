@@ -191,3 +191,34 @@ la vérification du code d'invitation dans `CreateNewUser`.
 - **Laisser l'enseignant sans accès au fil.** Le guide ne prévoit pas de route
   pour lui, alors que sa policy l'autorise à tout voir. Son rôle n'aurait eu
   aucun sens.
+
+---
+
+## Phase 6 — L'entraide
+
+### Ce que j'ai retenu
+
+- Le contrôleur de ressource singleton pour la réponse retenue, et la
+  justification du guide : c'est une action à part entière, pas une
+  modification de la question.
+- La vérification `abort_unless($reponse->publication_id === $question->id, 403)`,
+  que le guide signale comme le genre de faille qu'une IA laisse passer quand on
+  lui demande simplement « écris-moi le contrôleur ».
+
+### Ce que j'ai rejeté
+
+- **Une version du contrôleur qui se contentait de `exists:reponses,id`.** La
+  règle prouve que la réponse existe, pas qu'elle appartient à cette question.
+  J'ai vérifié la faille avant de la corriger : en envoyant l'identifiant d'une
+  réponse d'une autre question, la désignation aboutissait.
+- **Créditer les points avec `$user->points = $user->points + 10`.** Deux
+  requêtes simultanées liraient la même valeur et une addition serait perdue.
+  `increment()` délègue le calcul à SQL.
+- **Ne pas prévoir le retrait de la réponse retenue.** Le guide ne l'évoque pas,
+  mais sans lui l'auteur d'une question ne peut jamais se raviser, et un
+  changement d'avis créditerait deux auteurs de dix points.
+- **Laisser `/questions/{id}` accepter l'identifiant d'un post.** Questions et
+  posts partagent la même table : sans
+  `abort_unless($question->type === 'question', 404)`, on pouvait ouvrir un post
+  dans la vue des questions et voir un formulaire de réponse sur un contenu qui
+  n'en attend pas.

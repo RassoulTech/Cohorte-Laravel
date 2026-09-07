@@ -12,13 +12,14 @@
 
         @auth
             <nav>
-                {{-- Les liens Fil et Entraide seront ajoutes ici avec leurs
-                     routes, en phases 5 et 6. --}}
-
+                {{-- L'enseignant n'appartient a aucune promotion : il a son
+                     propre module. Les autres accedent au fil et a l'entraide
+                     de LEUR promotion, garantie non nulle par le middleware. --}}
                 @if (auth()->user()->estEnseignant())
                     <a href="{{ route('enseignant.promotions.index') }}">Les promotions</a>
                 @elseif (auth()->user()->promotion_id)
                     <a href="{{ route('publications.index') }}">Le fil</a>
+                    <a href="{{ route('questions.index') }}">Entraide</a>
                 @endif
 
                 <a href="{{ route('profil.show') }}">{{ auth()->user()->name }}</a>

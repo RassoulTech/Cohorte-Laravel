@@ -45,8 +45,62 @@ depuis l'auteur.
 
 ## 3. Comportement en cas de panne d'OpenRouter : *fail-open* ou *fail-closed* — phase 7
 
-*À rédiger en phase 7. La valeur est déjà pilotée par
-`config('cohorte.moderation_fail_open')`, réglée à `false` par défaut.*
+**Contexte.** Chaque publication est soumise à un modèle de langage avant
+enregistrement. Ce service extérieur peut être lent, en panne, ou renvoyer une
+réponse inexploitable. Il faut décider du sort d'une publication dont la
+modération n'a pas pu aboutir.
+
+**Ce que la question n'est pas.** Elle ne porte pas sur un verdict erroné : le
+parsing défensif de `ServiceModeration::interpreter()` écarte déjà toute réponse
+douteuse. À ce stade, il ne reste aucun verdict du tout. La question est donc :
+*en l'absence totale d'information, publie-t-on quand même ?*
+
+**Alternative écartée : fail-open.** Publier malgré l'absence de contrôle. Ce
+choix privilégie la continuité de service : l'application reste utilisable et
+personne ne remarque la panne. Il est défendable sur une plateforme grand public
+à fort volume, où une file d'attente deviendrait ingérable et où le coût d'un
+faux positif est élevé.
+
+**Choix retenu : fail-closed.** Une publication non contrôlée part en
+`en_moderation` et attend la décision d'un délégué.
+
+**Pourquoi ce choix ici, et pas ailleurs.**
+
+L'enjeu est asymétrique. Dans un réseau interne à une école, une insulte ou un
+harcèlement publiés atteignent des camarades identifiables et restent visibles.
+Une publication retardée d'une heure ne cause aucun préjudice comparable.
+
+Le volume rend la file soutenable. Une promotion compte une vingtaine de
+membres. Même une panne d'une journée entière ne produirait pas les deux cents
+publications qui rendraient la modération humaine impraticable — argument qui
+serait décisif sur une plateforme de plusieurs milliers d'utilisateurs.
+
+Le circuit de traitement existe déjà. Le rôle de délégué et sa file de
+modération sont prévus par le cahier des charges. Envoyer une publication en
+attente n'est pas une impasse : c'est un parcours normal de l'application.
+
+L'utilisateur n'est jamais empêché de s'exprimer. Il publie, et un message lui
+indique que sa publication sera validée par un délégué. Il n'y a ni erreur, ni
+page bloquée, ni perte de son texte.
+
+**Comment le choix est appliqué.** Il n'est pas écrit en dur. La constante
+`cohorte.moderation_fail_open` est lue par `VerdictModeration::statutPublication()`
+et pilotée depuis le `.env` :
+
+```
+COHORTE_MODERATION_FAIL_OPEN=false
+```
+
+Passer cette variable à `true` bascule l'application en fail-open sans modifier
+une ligne de code. La décision reste donc révisable si le contexte change —
+davantage de membres, ou une indisponibilité durable du fournisseur.
+
+**Ce que nous avons vérifié.** Neuf situations simulées avec `Http::fake()` :
+service en panne (503), réponse vide, contenu `null` malgré un HTTP 200, texte
+sans JSON, JSON sans la clé attendue, verdict inventé. Toutes produisent le
+verdict `Indisponible` et le statut `en_moderation`. Le cas du contenu `null`
+n'est pas théorique : il a été observé en interrogeant réellement le catalogue
+des modèles gratuits d'OpenRouter.
 
 ---
 

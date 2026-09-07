@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+
+    // On n'appelle JAMAIS env() hors d'un fichier de configuration : apres un
+    // php artisan config:cache, tous les env() situes ailleurs renvoient null.
+    'openrouter' => [
+        'key' => env('OPENROUTER_API_KEY'),
+        'url' => 'https://openrouter.ai/api/v1/chat/completions',
+        'model' => env('OPENROUTER_MODEL'),
+        'timeout' => (int) env('OPENROUTER_TIMEOUT', 12),
+    ],
+
 ];

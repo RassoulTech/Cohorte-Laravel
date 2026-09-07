@@ -72,6 +72,30 @@ class PublicationPolicy
     }
 
     /**
+     * Designer une reponse comme retenue.
+     *
+     * Ce n'est pas "modifier une question" : c'est une action a part entiere,
+     * avec ses propres droits. SEUL l'auteur de la question peut le faire, et
+     * seulement sur une question — pas sur un post.
+     */
+    public function designerReponse(User $user, Publication $publication): bool
+    {
+        return $user->id === $publication->user_id
+            && $publication->type === 'question';
+    }
+
+    /**
+     * Repondre a une question : etre de la promotion suffit. On peut repondre
+     * a sa propre question, contrairement au signalement.
+     */
+    public function repondre(User $user, Publication $publication): bool
+    {
+        return $publication->type === 'question'
+            && $publication->statut === 'publie'
+            && $user->promotion_id === $publication->promotion_id;
+    }
+
+    /**
      * On ne signale pas sa propre publication, ni celle d'une autre promotion.
      * Utilisee des la phase 8 ; ecrite ici pour que la regle vive au meme
      * endroit que les autres.

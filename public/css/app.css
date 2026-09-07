@@ -248,3 +248,19 @@ input[type="text"] {
     list-style: none;
     padding: 0;
 }
+
+/* --------------------------------------------------- Entraide (phase 6) */
+
+.carte--retenue {
+    border-color: #2f855a;
+    border-left-width: 4px;
+    background: #f4fbf6;
+}
+
+.carte--retenue .etiquette {
+    background: #2f855a;
+}
+
+.resolue {
+    color: #2f855a;
+}

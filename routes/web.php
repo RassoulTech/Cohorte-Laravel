@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Entraide\QuestionController;
+use App\Http\Controllers\Entraide\ReponseController;
+use App\Http\Controllers\Entraide\ReponseRetenueController;
 use App\Http\Controllers\Feed\PublicationController;
 use App\Http\Controllers\Profil\ProfilController;
 use App\Http\Controllers\Promotion\AdhesionController;
@@ -50,4 +53,21 @@ Route::middleware(['auth', 'promotion'])->group(function () {
     // supprime. Verifiable avec php artisan route:list --name=publications
     Route::resource('publications', PublicationController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy']);
+
+    // ------------------------------------------------------------ Entraide
+    Route::resource('questions', QuestionController::class)
+        ->only(['index', 'create', 'store', 'show']);
+
+    // Une reponse appartient a une question : son URL le dit.
+    Route::post('questions/{question}/reponses', [ReponseController::class, 'store'])
+        ->name('reponses.store');
+    Route::delete('reponses/{reponse}', [ReponseController::class, 'destroy'])
+        ->name('reponses.destroy');
+
+    // Ressource singleton : une question a AU PLUS une reponse retenue, d'ou
+    // l'absence d'identifiant dans l'URL. store() la designe, destroy() la retire.
+    Route::post('questions/{question}/reponse-retenue', [ReponseRetenueController::class, 'store'])
+        ->name('reponse-retenue.store');
+    Route::delete('questions/{question}/reponse-retenue', [ReponseRetenueController::class, 'destroy'])
+        ->name('reponse-retenue.destroy');
 });

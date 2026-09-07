@@ -380,3 +380,72 @@ devait donc pouvoir tout consulter sans jamais y accéder. J'ai ajouté une rout
 `abort_unless(...->estEnseignant(), 403)`. Elle n'applique pas le scope
 `visibles()` : l'enseignant est un observateur et voit aussi ce qui est masqué ou
 en attente, ce qu'autorise déjà sa policy. Awa reçoit bien 403 sur cette route.
+
+---
+
+## Phase 6 — L'entraide, questions et réponses
+
+Branche : `feat/06-entraide`
+Dates : 3 au 7 septembre 2026
+
+### Ce que j'ai fait
+
+J'ai écrit le module d'entraide : un contrôleur de ressource pour les questions,
+un contrôleur pour les réponses, et un troisième dédié à la réponse retenue.
+J'ai ajouté deux méthodes à la `PublicationPolicy`, `designerReponse()` et
+`repondre()`, deux `FormRequest`, et les trois vues du module. Retenir une
+réponse crédite son auteur de dix points ; retirer la désignation les lui reprend.
+
+### Pourquoi je l'ai fait ainsi
+
+Désigner une réponse comme retenue n'est pas modifier une question : c'est une
+action distincte, avec ses propres droits, puisque seul l'auteur de la question
+peut la faire. Plutôt qu'une méthode de plus dans le contrôleur des questions,
+j'ai créé un contrôleur dédié à cette ressource. Une question a au plus une
+réponse retenue, d'où l'absence d'identifiant dans l'URL : c'est un contrôleur de
+ressource singleton.
+
+Le titre est facultatif pour un post mais obligatoire pour une question, avec un
+minimum de dix caractères. C'est lui que la détection de doublon de la phase 9
+comparera aux questions existantes : une question sans titre y serait invisible.
+
+Pour créditer les points j'utilise `increment('points', 10)` et non une lecture
+suivie d'une écriture. La méthode génère `UPDATE users SET points = points + 10`
+en SQL : si deux requêtes arrivent en même temps, aucune des deux additions n'est
+perdue.
+
+### La difficulté rencontrée
+
+Deux problèmes, l'un de conception, l'autre de manipulation.
+
+La règle `exists:reponses,id` garantit qu'une réponse existe, pas qu'elle
+appartient à la question qu'on est en train de traiter. Le formulaire transmet
+l'identifiant de la réponse dans un champ caché, modifiable par n'importe qui
+depuis le navigateur.
+
+Par ailleurs, en préparant les commits, mon fichier `layouts/app.blade.php` est
+revenu à sa version de la phase 0 : les liens vers le fil, l'entraide, les
+promotions et le profil avaient disparu du fichier de travail.
+
+### Comment je l'ai résolue
+
+Pour la première, j'ai ajouté
+`abort_unless($reponse->publication_id === $question->id, 403)` après la
+validation. Je l'ai vérifié en envoyant volontairement l'identifiant d'une
+réponse écrite sur une autre question : la requête est refusée avec 403, alors
+qu'elle aurait abouti sans cette ligne. J'ai également testé qu'un membre d'une
+autre promotion ne peut ni consulter la question, ni y répondre, ni désigner sa
+réponse retenue.
+
+Pour la seconde, `git status` montrait le gabarit en modifié, ce qui était
+attendu puisque j'y ajoutais le lien Entraide. Mais `git diff` révélait une
+suppression de trois phases de navigation. La version correcte était dans le
+dernier commit : `git restore resources/views/layouts/app.blade.php` l'a
+récupérée, et j'ai réappliqué ma seule modification par-dessus. Sans la
+relecture du diff avant le commit, j'aurais supprimé toute ma navigation sans
+m'en apercevoir. C'est exactement le risque que fait courir `git add .`.
+
+J'ai enfin ajouté une possibilité que le guide ne prévoit pas : retirer la
+réponse retenue. Sans elle, l'auteur d'une question ne pouvait jamais se
+raviser, et changer d'avis aurait crédité deux personnes de dix points chacune
+au lieu d'une.

@@ -449,3 +449,79 @@ J'ai enfin ajouté une possibilité que le guide ne prévoit pas : retirer la
 réponse retenue. Sans elle, l'auteur d'une question ne pouvait jamais se
 raviser, et changer d'avis aurait crédité deux personnes de dix points chacune
 au lieu d'une.
+
+---
+
+## Phase 7 — OpenRouter et la modération automatique
+
+Branche : `feat/07-moderation-ia`
+Dates : 7 au 10 septembre 2026
+
+### Ce que j'ai fait
+
+J'ai isolé toute la communication avec OpenRouter dans une classe unique,
+`OpenRouterClient`, ajouté une énumération `VerdictModeration` à quatre cas, écrit
+`ServiceModeration` qui interroge le modèle et interprète sa réponse, et branché
+le tout sur la création d'une publication. Chaque appel est tracé dans la table
+`appels_ia` créée en phase 1, qui servira au calcul du quota en phase 9. La
+configuration d'accès vit dans `config/services.php`, la clé et le modèle dans le
+`.env`.
+
+### Pourquoi je l'ai fait ainsi
+
+Aucun contrôleur ne contient d'appel `Http::post()` : le jour où l'on change de
+fournisseur, un seul fichier bouge. `OpenRouterClient` ne lève jamais
+d'exception et ne prend aucune décision métier : il renvoie du texte ou `null`,
+et c'est `ServiceModeration` qui tranche. Une classe technique ne décide pas
+d'une règle de gestion.
+
+Le verdict est une énumération et non une chaîne libre. Elle interdit d'écrire
+`acceptble` par erreur, garantit l'exhaustivité du `match()`, et le cas
+`Indisponible` donne un nom au cas « je n'ai pas d'avis ».
+
+J'ai retenu le fail-closed, argumenté dans `DECISIONS.md` : dans un réseau
+scolaire, une insulte publiée cause un préjudice sans commune mesure avec une
+publication retardée, la promotion compte une vingtaine de membres donc la file
+reste soutenable, et le délégué qui la traitera existe déjà au cahier des
+charges. Le choix est piloté par `COHORTE_MODERATION_FAIL_OPEN` : le correcteur
+peut tester l'autre comportement sans toucher au code.
+
+### La difficulté rencontrée
+
+Le modèle retenu a cessé de fonctionner deux jours après avoir été choisi. Les
+trois publications de test se sont toutes retrouvées en `en_moderation` avec le
+motif `indisponible`. Le journal donnait la réponse exacte du serveur :
+`This model is unavailable for free. The paid version is available now`.
+`minimax/minimax-m3:free`, qui répondait parfaitement le 7 septembre, était
+devenu payant le 9.
+
+### Comment je l'ai résolue
+
+J'ai interrogé le catalogue d'OpenRouter et testé les dix-huit modèles annoncés
+gratuits, un par un, sur les trois verdicts attendus. Le résultat est instructif :
+quatre renvoient une erreur du fournisseur, cinq répondent HTTP 200 avec un
+contenu vide, deux exigent un compte vérifié, deux exposent leur raisonnement
+sans produire de JSON, et plusieurs classent tout en `inacceptable` sans
+discriminer. Un seul, `nvidia/nemotron-3-super-120b-a12b:free`, rend les trois
+verdicts corrects : `acceptable` pour un remerciement, `douteux` pour de la
+publicité, `inacceptable` pour une insulte.
+
+La correction a consisté en une seule ligne du `.env`. Aucun fichier PHP modifié,
+aucun commit. C'est exactement l'intérêt de la règle du guide qui interdit de
+coder un identifiant de modèle en dur, et je l'ai vérifiée dans les faits plutôt
+qu'en théorie. Il faut également noter que pendant toute la panne, rien n'a fui :
+le fail-closed a envoyé les trois publications en file de modération au lieu de
+les laisser passer sans contrôle.
+
+J'ai vérifié le parsing défensif sur neuf situations simulées avec `Http::fake()` :
+JSON propre, JSON encadré par des accents graves, phrase d'introduction avant le
+JSON, texte sans aucun JSON, JSON sans la clé attendue, verdict inventé, verdict
+en majuscules, contenu `null`, et service en panne 503. Toutes produisent un
+statut valide, aucune ne lève d'exception. Les cas du contenu `null` et du
+verdict en majuscules ne figurent pas dans le guide : je les ai ajoutés après les
+avoir réellement observés en interrogeant le catalogue.
+
+Le test de bout en bout avec de vrais appels confirme la chaîne complète : un
+remerciement est publié et apparaît dans le fil, une publicité part en
+`en_moderation`, une insulte est `refuse`, et les trois appels sont enregistrés
+dans `appels_ia`.

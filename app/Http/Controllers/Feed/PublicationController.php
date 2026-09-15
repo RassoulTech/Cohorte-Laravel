@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Feed;
 
+use App\Enums\VerdictModeration;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePublicationRequest;
 use App\Models\Publication;
+use App\Services\ServiceModeration;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,9 +67,17 @@ class PublicationController extends Controller
         return view('feed.create');
     }
 
-    public function store(StorePublicationRequest $request): RedirectResponse
-    {
+    public function store(
+        StorePublicationRequest $request,
+        // Laravel construit et injecte le service tout seul : c'est l'injection
+        // de dependances. Aucun new ServiceModeration(...) nulle part.
+        ServiceModeration $moderation
+    ): RedirectResponse {
         $this->authorize('create', Publication::class);
+
+        // La moderation a lieu AVANT l'enregistrement : c'est son verdict qui
+        // decide du statut de la publication.
+        $verdict = $moderation->evaluer($request->validated()['contenu'], $request->user());
 
         // validated() ne renvoie QUE les champs passes par les regles du
         // FormRequest : un champ ajoute a la main dans le formulaire ne peut
@@ -81,13 +91,20 @@ class PublicationController extends Controller
             // formulaire : sinon n'importe qui publierait chez les autres.
             'promotion_id' => $request->user()->promotion_id,
 
-            // 'publie' pour l'instant ; la moderation IA decidera en phase 7.
-            'statut' => 'publie',
+            'statut' => $verdict->statutPublication(),
+            'motif_moderation' => $verdict->value,
         ]);
 
-        return redirect()
-            ->route('publications.show', $publication)
-            ->with('succes', 'Votre publication est en ligne.');
+        // Une publication refusee ou en attente n'apparait pas dans le fil :
+        // on renvoie vers le fil plutot que vers sa page de detail.
+        $destination = $verdict === VerdictModeration::Acceptable
+            ? redirect()->route('publications.show', $publication)
+            : redirect()->route('publications.index');
+
+        // Le message est rouge pour un refus, vert dans tous les autres cas.
+        $canal = $verdict === VerdictModeration::Inacceptable ? 'erreur' : 'succes';
+
+        return $destination->with($canal, $verdict->message());
     }
 
     public function show(Publication $publication): View

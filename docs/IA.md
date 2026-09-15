@@ -222,3 +222,37 @@ la vérification du code d'invitation dans `CreateNewUser`.
   `abort_unless($question->type === 'question', 404)`, on pouvait ouvrir un post
   dans la vue des questions et voir un formulaire de réponse sur un contenu qui
   n'en attend pas.
+
+---
+
+## Phase 7 — Modération automatique
+
+### Ce que j'ai retenu
+
+- L'architecture en couches du guide : un client technique qui ne décide rien,
+  un service métier qui tranche, une énumération pour le verdict.
+- Le `timeout`, le `retry(2, 400, throw: false)` et le `try/catch` qui renvoie
+  `null` plutôt que de propager une exception.
+- La méthode `interpreter()` et son extraction du premier bloc entre accolades.
+
+### Ce que j'ai rejeté
+
+- **Écrire l'identifiant du modèle dans le service.** Le guide l'interdit ; j'en
+  ai eu la démonstration en deux jours, `minimax/minimax-m3:free` étant devenu
+  payant entre le moment où je l'ai choisi et celui où je l'ai testé de bout en
+  bout. La correction a été une ligne de `.env`.
+- **Un `interpreter()` limité aux trois cas du guide.** En interrogeant
+  réellement le catalogue, j'ai observé deux comportements qu'il ne mentionne
+  pas : un modèle qui répond HTTP 200 avec `content: null`, et un verdict rendu
+  en majuscules. J'ai ajouté le test de chaîne vide et un `strtolower(trim(...))`
+  avant le `tryFrom()`.
+- **`VerdictModeration::from()`.** Il lève une `ValueError` si la valeur ne
+  correspond à aucun cas. `tryFrom()` renvoie `null`, ce qui me permet de
+  journaliser le verdict inventé et de retomber sur `Indisponible`.
+- **Rediriger vers `publications.show` dans tous les cas.** Une publication
+  refusée ou en attente n'apparaît pas dans le fil : j'ai séparé les deux
+  destinations et le canal du message, vert ou rouge selon le verdict.
+- **Tester les neuf cas dans un seul processus.** `Http::fake()` accumule les
+  stubs et le premier enregistré l'emporte : les neuf cas renvoyaient le même
+  verdict, ce qui m'a d'abord fait croire à un bug du parsing. Chaque cas est
+  désormais exécuté dans son propre processus.

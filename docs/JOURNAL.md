@@ -525,3 +525,69 @@ Le test de bout en bout avec de vrais appels confirme la chaîne complète : un
 remerciement est publié et apparaît dans le fil, une publicité part en
 `en_moderation`, une insulte est `refuse`, et les trois appels sont enregistrés
 dans `appels_ia`.
+
+---
+
+## Phase 8 — Les signalements et le masquage automatique
+
+Branche : `feat/08-signalements`
+Dates : 21 septembre 2026
+
+### Ce que j'ai fait
+
+J'ai écrit le `SignalementController`, sa méthode privée `masquerSiSeuilAtteint()`,
+le `FileModerationController` du délégué, un composant Blade de signalement
+réutilisé par le fil et par l'entraide, et la vue de la file. Le lien
+« Modération » n'apparaît dans la barre que pour un délégué.
+
+### Pourquoi je l'ai fait ainsi
+
+Le seuil vient de `config('cohorte.seuil_signalement')` et jamais d'une valeur
+écrite en dur : le correcteur peut le passer à 1 pour vérifier le masquage sans
+toucher au code.
+
+Le masquage ne s'applique qu'à une publication dont le statut est `publie`. Sans
+cette condition, une publication déjà refusée par la modération automatique
+verrait son motif écrasé par celui du masquage, et l'historique de la décision
+serait perdu.
+
+Le formulaire de signalement est un composant, pas un bloc recopié dans deux
+vues. Posts et questions partagent la même table : le même composant sert aux
+deux, et le jour où il change, un seul fichier bouge.
+
+### La difficulté rencontrée
+
+La vérification du doublon posait une question que je ne m'étais pas posée : la
+base porte déjà une contrainte unique sur `(publication_id, user_id)` depuis la
+phase 1. Fallait-il vraiment re-vérifier en PHP, ou était-ce de la duplication ?
+
+Par ailleurs, en testant que Fatou ne peut pas signaler une publication du
+groupe A, j'obtenais une erreur 419 au lieu du 403 attendu.
+
+### Comment je l'ai résolue
+
+Sur le doublon, j'ai gardé les deux contrôles, parce qu'ils ne s'adressent pas
+au même public. La contrainte de base garantit l'intégrité des données quoi
+qu'il arrive : code contourné, requête forgée, ou deux requêtes simultanées qui
+passeraient toutes deux le test PHP avant que l'une ait écrit. La vérification
+PHP, elle, sert à afficher un message compréhensible plutôt qu'une page d'erreur
+SQL. La base protège, le code explique.
+
+Le 419 venait de mon script de test et non de l'application : pour envoyer le
+formulaire, j'extrayais le jeton CSRF depuis la page de la publication — or
+Fatou reçoit précisément un 403 sur cette page, donc aucun jeton n'était
+récupéré. En prenant le jeton depuis une page qu'elle peut ouvrir, le
+signalement renvoie bien 403. C'est la deuxième fois de ce projet qu'un 419
+masque autre chose : une erreur 419 ne signifie pas « `@csrf` manquant » mais
+« le jeton reçu ne correspond pas à la session », ce qui inclut le cas d'un
+jeton absent.
+
+J'ai vérifié les dix situations. Les trois interdits sont respectés :
+auto-signalement et signalement hors promotion renvoient 403, un second
+signalement du même membre est refusé sans incrémenter le compteur. Au troisième
+signalement par trois membres différents, la publication passe en `masque` avec
+le motif « Masquée automatiquement après 3 signalements ». Le délégué du groupe
+A ouvre sa file et y trouve cette publication, la remet en ligne, et son motif
+est effacé. Une apprenante reçoit 403 sur la file, et surtout le délégué du
+groupe A reçoit 403 quand il tente de modérer une publication du groupe B :
+être délégué ne suffit pas, il faut être délégué de cette promotion.

@@ -12,6 +12,8 @@
         </footer>
     </article>
 
+    <x-formulaire-signalement :publication="$question" />
+
     <h2>{{ $question->reponses->count() }} réponse(s)</h2>
 
     @forelse ($question->reponses as $reponse)

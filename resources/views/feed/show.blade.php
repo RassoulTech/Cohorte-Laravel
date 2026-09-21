@@ -38,6 +38,8 @@
         </div>
     @endif
 
+    <x-formulaire-signalement :publication="$publication" />
+
     <p class="liens">
         <a href="{{ route('publications.index') }}">Retour au fil</a>
 

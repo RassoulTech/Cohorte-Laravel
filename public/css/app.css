@@ -264,3 +264,27 @@ input[type="text"] {
 .resolue {
     color: #2f855a;
 }
+
+/* ------------------------------------------------ Signalements (phase 8) */
+
+.signalement {
+    margin-top: 1rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid #e3e8ed;
+}
+
+.signalement summary {
+    color: #9b2c2c;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.decisions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.decisions form {
+    margin: 0;
+}

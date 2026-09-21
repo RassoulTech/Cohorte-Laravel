@@ -256,3 +256,27 @@ la vérification du code d'invitation dans `CreateNewUser`.
   stubs et le premier enregistré l'emporte : les neuf cas renvoyaient le même
   verdict, ce qui m'a d'abord fait croire à un bug du parsing. Chaque cas est
   désormais exécuté dans son propre processus.
+
+---
+
+## Phase 8 — Signalements
+
+### Ce que j'ai retenu
+
+- La structure du contrôleur du guide et la méthode privée de masquage.
+- La double vérification de `update()` : être délégué, et être délégué de la
+  promotion concernée.
+
+### Ce que j'ai rejeté
+
+- **Supprimer le contrôle PHP du doublon** sous prétexte que la contrainte
+  unique existe en base. Elle produirait une page d'erreur SQL au lieu d'un
+  message lisible.
+- **Masquer sans vérifier le statut courant.** Le guide le fait, mais sans la
+  condition `statut === 'publie'` une publication déjà refusée par l'IA verrait
+  son motif écrasé par celui du masquage automatique.
+- **Recopier le formulaire de signalement dans `feed/show` et
+  `entraide/show`.** J'en ai fait un composant : les deux vues affichent des
+  lignes de la même table.
+- **Créer un middleware pour la file du délégué.** Pour deux routes, un
+  `abort_unless` dans le contrôleur est plus lisible et se montre en soutenance.

@@ -4,6 +4,8 @@ use App\Http\Controllers\Entraide\QuestionController;
 use App\Http\Controllers\Entraide\ReponseController;
 use App\Http\Controllers\Entraide\ReponseRetenueController;
 use App\Http\Controllers\Feed\PublicationController;
+use App\Http\Controllers\Moderation\FileModerationController;
+use App\Http\Controllers\Moderation\SignalementController;
 use App\Http\Controllers\Profil\ProfilController;
 use App\Http\Controllers\Promotion\AdhesionController;
 use App\Http\Controllers\Promotion\PromotionController;
@@ -70,4 +72,16 @@ Route::middleware(['auth', 'promotion'])->group(function () {
         ->name('reponse-retenue.store');
     Route::delete('questions/{question}/reponse-retenue', [ReponseRetenueController::class, 'destroy'])
         ->name('reponse-retenue.destroy');
+
+    // --------------------------------------------------------- Moderation
+    // Signaler n'importe quelle publication : post ou question, meme table.
+    Route::post('publications/{publication}/signalements', [SignalementController::class, 'store'])
+        ->name('signalements.store');
+
+    // La file du delegue. Reservee par abort_unless dans le controleur : on ne
+    // cree pas un middleware pour une seule route.
+    Route::get('moderation', [FileModerationController::class, 'index'])
+        ->name('moderation.index');
+    Route::patch('moderation/{publication}', [FileModerationController::class, 'update'])
+        ->name('moderation.update');
 });

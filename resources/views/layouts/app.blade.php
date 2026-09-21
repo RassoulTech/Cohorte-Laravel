@@ -20,6 +20,13 @@
                 @elseif (auth()->user()->promotion_id)
                     <a href="{{ route('publications.index') }}">Le fil</a>
                     <a href="{{ route('questions.index') }}">Entraide</a>
+
+                    {{-- La file n'est proposee qu'au delegue. Le controleur
+                         verifie a nouveau avec abort_unless : l'affichage ne
+                         protege jamais une route. --}}
+                    @if (auth()->user()->estDelegue())
+                        <a href="{{ route('moderation.index') }}">Modération</a>
+                    @endif
                 @endif
 
                 <a href="{{ route('profil.show') }}">{{ auth()->user()->name }}</a>

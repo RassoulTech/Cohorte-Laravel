@@ -38,6 +38,25 @@
         </div>
     @endif
 
+    {{-- @can appelle PublicationPolicy::epingler() : le bouton n'apparait que
+         si la reputation atteint le seuil, ou si l'on est delegue. --}}
+    @can('epingler', $publication)
+        <p class="liens">
+            @if ($publication->epingle_le)
+                <form method="POST" action="{{ route('epinglage.destroy', $publication) }}">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="bouton-secondaire">Désépingler</button>
+                </form>
+            @else
+                <form method="POST" action="{{ route('epinglage.store', $publication) }}">
+                    @csrf
+                    <button type="submit" class="bouton-secondaire">Épingler en tête du fil</button>
+                </form>
+            @endif
+        </p>
+    @endcan
+
     <x-formulaire-signalement :publication="$publication" />
 
     <p class="liens">

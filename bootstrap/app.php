@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // dans les routes, par exemple Route::middleware(['auth', 'promotion']).
         $middleware->alias([
             'promotion' => \App\Http\Middleware\ExigePromotion::class,
+            'quota.ia' => \App\Http\Middleware\VerifieQuotaIa::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

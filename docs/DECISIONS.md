@@ -114,4 +114,52 @@ sera argumenté à ce moment-là.*
 
 ## 5. Ne pas soumettre la modération au quota d'IA — phase 9
 
-*À rédiger en phase 9.*
+**Contexte.** Deux fonctionnalités consomment des appels à OpenRouter : la
+modération, déclenchée à chaque publication, et la détection de doublon,
+déclenchée à la demande avant de poser une question. L'offre gratuite est
+limitée à environ deux cents requêtes par jour. Un quota par membre est donc
+indispensable — reste à décider ce qu'il protège.
+
+**Alternative écartée : soumettre les deux au quota.** C'est la lecture la plus
+simple : toute consommation d'IA décompte, donc toute consommation est bloquée
+quand le compteur est vide. Elle a l'avantage de la cohérence apparente et
+garantit qu'on ne dépasse jamais l'enveloppe du fournisseur.
+
+Elle produit pourtant un effet inacceptable. La modération se déclenche à
+l'enregistrement d'une publication : bloquer l'appel reviendrait à bloquer la
+publication elle-même. Un membre ayant épuisé son quota ne pourrait plus
+s'exprimer sur le réseau de sa promotion jusqu'au lendemain. Un quota technique
+deviendrait une sanction sociale, alors qu'il n'a jamais été conçu pour cela.
+
+**Choix retenu : ne soumettre au quota que la détection de doublon.**
+
+La distinction n'est pas technique mais fonctionnelle. La modération est une
+**contrainte imposée par l'application** : elle sert à protéger la promotion,
+pas à rendre service au membre, et celui-ci ne la demande jamais. La détection
+de doublon est une **assistance** : le membre la déclenche volontairement, elle
+lui fait gagner du temps, et la lui retirer ne l'empêche de rien — il publie sa
+question comme avant l'existence de la fonctionnalité.
+
+On retire une assistance. On ne retire pas une protection.
+
+**Comment le choix est appliqué.** Les deux appels sont enregistrés dans
+`appels_ia`, donc tous deux décomptés du quota : la mesure de consommation reste
+exacte. Mais une seule route porte le middleware :
+
+```php
+Route::post('questions/verifier-doublon', [DetectionDoublonController::class, 'store'])
+     ->middleware('quota.ia')
+     ->name('questions.doublon');
+```
+
+Quand le quota est épuisé, le bouton de vérification disparaît du formulaire, le
+middleware refuse la route si on l'appelle malgré tout, et la publication reste
+possible. Le quota restant est affiché en permanence dans la barre de
+navigation : le membre sait ce qu'il lui reste avant de le découvrir en étant
+bloqué.
+
+**Ce que nous avons vérifié.** Avec un quota épuisé, `POST
+questions/verifier-doublon` est renvoyé en arrière par le middleware avec un
+message explicite, tandis que `POST questions` publie normalement. La
+réinitialisation à minuit a été testée en antidatant les appels d'un jour : le
+compteur repart à dix.

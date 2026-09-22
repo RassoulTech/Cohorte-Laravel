@@ -591,3 +591,65 @@ A ouvre sa file et y trouve cette publication, la remet en ligne, et son motif
 est effacé. Une apprenante reçoit 403 sur la file, et surtout le délégué du
 groupe A reçoit 403 quand il tente de modérer une publication du groupe B :
 être délégué ne suffit pas, il faut être délégué de cette promotion.
+
+---
+
+## Phase 9 — Le quota d'IA et la détection de doublon
+
+Branche : `feat/09-quota-et-doublon`
+Dates : 22 septembre 2026
+
+### Ce que j'ai fait
+
+J'ai ajouté trois méthodes de quota au modèle `User`, un middleware
+`VerifieQuotaIa`, le `ServiceDetectionDoublon` et son contrôleur. Le quota
+restant est affiché en permanence dans la barre de navigation. Le formulaire de
+question propose un bouton de vérification qui, le cas échéant, réaffiche la
+saisie accompagnée des questions proches et d'un bouton « Publier quand même ».
+
+### Pourquoi je l'ai fait ainsi
+
+Seule la détection de doublon est soumise au quota, et c'est une décision de
+conception que j'ai consignée dans `DECISIONS.md`. La modération est une
+contrainte imposée par l'application, pas un service rendu au membre : bloquer
+son appel reviendrait à l'empêcher de publier. La détection est une assistance,
+qu'on peut retirer sans dommage. Les deux appels sont comptés dans `appels_ia`,
+mais une seule route porte le middleware.
+
+J'ai réglé `config/app.php` sur `Africa/Dakar`. `now()` utilise ce fuseau, et
+laissé à UTC, minuit serait tombé en pleine journée pour une promotion de Dakar,
+réinitialisant le quota au mauvais moment. Je n'utilise pas `whereDate()`, qui
+délègue la comparaison à MySQL et n'emploie pas le même fuseau.
+
+La requête finale du service refiltre sur la promotion. Le modèle pourrait
+inventer un identifiant ou renvoyer celui d'une question d'un autre groupe :
+sans ce refiltrage, l'IA ouvrirait une brèche dans le cloisonnement.
+
+### La difficulté rencontrée
+
+La page de vérification renvoyait une erreur 500. Le journal indiquait :
+`Attempted to lazy load [auteur] on model [App\Models\Publication] but lazy
+loading is disabled`, dans la vue `entraide/create.blade.php`.
+
+### Comment je l'ai résolue
+
+C'est le garde-fou `preventLazyLoading`, activé dès la phase 0, qui faisait son
+travail : la vue affiche le nom de l'auteur de chaque question proche, mais la
+requête du service ne préchargeait pas la relation. J'ai ajouté `->with('auteur')`
+à la requête finale.
+
+L'erreur elle-même m'a appris quelque chose : si la vue essayait de charger les
+auteurs, c'est que la détection avait bel et bien trouvé des questions
+similaires. Le plantage prouvait le fonctionnement de la fonctionnalité.
+
+J'ai ensuite vérifié le service directement : sur la question « Quelle est la
+différence entre git revert et git reset ? », il retrouve les deux questions
+identiques de la promotion 1 et aucune de la promotion 2. Un appel HTTP formulé
+autrement a renvoyé zéro similarité, ce qui est le comportement normal d'un
+modèle : il propose, mon code dispose.
+
+J'ai enfin testé le quota. Après dix appels, `peutAppelerIa()` passe à faux, le
+bouton de vérification disparaît, le middleware renvoie en arrière avec un
+message explicite, et la publication d'une question reste possible. En antidatant
+les appels d'un jour, le compteur repart à dix : la réinitialisation à minuit
+fonctionne.

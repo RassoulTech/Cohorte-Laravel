@@ -87,4 +87,34 @@ class User extends Authenticatable
     {
         return $this->role === 'delegue';
     }
+
+    // ---------------------------------------------------------- Quota d'IA
+    // L'offre gratuite d'OpenRouter est limitee a environ 200 requetes par
+    // jour : sans compteur, une promotion entiere la consommerait en une heure.
+
+    /**
+     * Nombre d'appels a l'IA passes depuis minuit.
+     *
+     * On compare a now()->startOfDay() et NON avec whereDate() : whereDate
+     * delegue la comparaison a MySQL, qui n'utilise pas le fuseau de
+     * l'application. Minuit ne tomberait pas au bon moment.
+     */
+    public function appelsIaAujourdhui(): int
+    {
+        return $this->appelsIa()
+            ->where('created_at', '>=', now()->startOfDay())
+            ->count();
+    }
+
+    public function quotaIaRestant(): int
+    {
+        // max(0, ...) : si le quota etait abaisse en cours de journee, le
+        // restant ne doit jamais devenir negatif a l'affichage.
+        return max(0, config('cohorte.quota_ia_quotidien') - $this->appelsIaAujourdhui());
+    }
+
+    public function peutAppelerIa(): bool
+    {
+        return $this->quotaIaRestant() > 0;
+    }
 }

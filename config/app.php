@@ -65,7 +65,10 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Le quota d'IA se remet a zero a minuit, et now() utilise CE fuseau.
+    // Laisse a UTC, minuit tomberait a 00h00 UTC soit en pleine journee pour
+    // une promotion de Dakar, et le quota se reinitialiserait au mauvais moment.
+    'timezone' => env('APP_TIMEZONE', 'Africa/Dakar'),
 
     /*
     |--------------------------------------------------------------------------

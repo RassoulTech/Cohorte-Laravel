@@ -51,7 +51,6 @@ class PublicationController extends Controller
             ->deLaPromotion($request->user()->promotion_id)  // LE cloisonnement
             ->with('auteur')                                 // anti N+1 : 2 requetes, pas 16
             ->withCount('signalements')                      // un COUNT, sans charger les lignes
-            ->orderByRaw('epingle_le IS NULL')               // 0 (epinglees) avant 1
             ->orderByDesc('epingle_le')
             ->latest()                                       // puis les plus recentes
             ->paginate(15);

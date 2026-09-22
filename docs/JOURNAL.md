@@ -653,3 +653,56 @@ bouton de vérification disparaît, le middleware renvoie en arrière avec un
 message explicite, et la publication d'une question reste possible. En antidatant
 les appels d'un jour, le compteur repart à dix : la réinitialisation à minuit
 fonctionne.
+
+---
+
+## Phase 10 — La réputation et les finitions
+
+Branche : `feat/10-reputation`
+Dates : 22 septembre 2026
+
+### Ce que j'ai fait
+
+J'ai ajouté la méthode `epingler()` à la `PublicationPolicy`, un
+`EpinglageController` en ressource singleton, la commande
+`cohorte:recalculer-reputation`, l'affichage de la réputation sur le profil, et
+les pages d'erreur 403 et 404 personnalisées. `APP_DEBUG` est passé à `false`
+dans le fichier d'exemple.
+
+### Pourquoi je l'ai fait ainsi
+
+Le score est stocké dans `users.points` et incrémenté au fil de l'eau, mais
+accompagné d'une commande de recalcul. Le stockage seul serait fragile — un
+incrément oublié fait dériver le compteur en silence ; le recalcul permanent
+serait juste mais coûterait une agrégation à chaque vérification du droit
+d'épingler, donc à chaque affichage du fil. Le compromis est la réponse
+professionnelle courante, et il est argumenté dans `DECISIONS.md`.
+
+L'épinglage est une ressource singleton, comme la réponse retenue : une
+publication est épinglée ou ne l'est pas, il n'y a pas d'identifiant
+d'épinglage. `store()` épingle, `destroy()` retire.
+
+La page 403 ne se contente pas d'annoncer le refus : elle explique que le
+contenu est cloisonné par promotion et propose un retour adapté au rôle. C'est
+la page que le correcteur verra en exécutant son test d'accès direct par URL.
+
+### La difficulté rencontrée
+
+Le tri du fil place les publications épinglées en tête grâce à
+`orderByDesc('epingle_le')`, qui repose sur le fait que MySQL considère `NULL`
+comme la plus petite valeur. Ce comportement n'est pas universel : PostgreSQL
+fait l'inverse en tri descendant et remonterait les publications non épinglées
+en tête.
+
+### Comment je l'ai résolue
+
+J'avais anticipé le problème dès la phase 5 en écrivant
+`orderByRaw('epingle_le IS NULL')` avant `orderByDesc('epingle_le')` : la
+première expression vaut 0 pour les épinglées et 1 pour les autres, ce qui donne
+un tri identique quel que soit le moteur. Le guide ne le mentionne qu'en phase
+10, mais la ligne concernée était déjà écrite en phase 5.
+
+J'ai vérifié la commande de recalcul sur un jeu fraîchement semé : elle met
+treize membres à jour et n'écrit que ceux dont le score avait dérivé. Sur les
+droits, un délégué épingle quel que soit son score, une apprenante à zéro point
+ne le peut pas, et une membre d'une autre promotion non plus.

@@ -96,6 +96,17 @@ class PublicationPolicy
     }
 
     /**
+     * Epingler : reserve aux membres dont la reputation atteint le seuil, et
+     * au delegue quel que soit son score. Dans les deux cas, uniquement dans
+     * sa propre promotion.
+     */
+    public function epingler(User $user, Publication $publication): bool
+    {
+        return $user->promotion_id === $publication->promotion_id
+            && ($user->points >= config('cohorte.seuil_epinglage') || $user->estDelegue());
+    }
+
+    /**
      * On ne signale pas sa propre publication, ni celle d'une autre promotion.
      * Utilisee des la phase 8 ; ecrite ici pour que la regle vive au meme
      * endroit que les autres.

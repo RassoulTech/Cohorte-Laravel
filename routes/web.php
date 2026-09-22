@@ -4,6 +4,7 @@ use App\Http\Controllers\Entraide\DetectionDoublonController;
 use App\Http\Controllers\Entraide\QuestionController;
 use App\Http\Controllers\Entraide\ReponseController;
 use App\Http\Controllers\Entraide\ReponseRetenueController;
+use App\Http\Controllers\Feed\EpinglageController;
 use App\Http\Controllers\Feed\PublicationController;
 use App\Http\Controllers\Moderation\FileModerationController;
 use App\Http\Controllers\Moderation\SignalementController;
@@ -80,6 +81,12 @@ Route::middleware(['auth', 'promotion'])->group(function () {
         ->name('reponse-retenue.store');
     Route::delete('questions/{question}/reponse-retenue', [ReponseRetenueController::class, 'destroy'])
         ->name('reponse-retenue.destroy');
+
+    // Ressource singleton : une publication est epinglee ou ne l'est pas.
+    Route::post('publications/{publication}/epinglage', [EpinglageController::class, 'store'])
+        ->name('epinglage.store');
+    Route::delete('publications/{publication}/epinglage', [EpinglageController::class, 'destroy'])
+        ->name('epinglage.destroy');
 
     // --------------------------------------------------------- Moderation
     // Signaler n'importe quelle publication : post ou question, meme table.

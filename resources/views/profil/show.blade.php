@@ -30,12 +30,24 @@
             {{ $membre->promotion?->nom ?? 'aucune' }}
         </p>
 
-        <p><strong>Points de contribution :</strong> {{ $membre->points }}</p>
     </article>
 
-    {{-- L'enseignant n'a pas de promotion et ne doit pas en rejoindre une : on
-         ne lui propose donc pas le lien. La regle est aussi appliquee cote
-         controleur, l'affichage ne protege rien a lui seul. --}}
+    {{-- L'enseignant ne publie pas : la reputation n'a pas de sens pour lui. --}}
+    @unless ($membre->estEnseignant())
+        <p class="meta">
+            Réputation : <strong>{{ $membre->points }}</strong> point(s).
+            @if ($membre->points >= config('cohorte.seuil_epinglage'))
+                Vous pouvez épingler une publication en tête du fil.
+            @else
+                Il vous faut {{ config('cohorte.seuil_epinglage') }} points pour
+                pouvoir épingler une publication.
+            @endif
+        </p>
+    @endunless
+
+    {{-- L'enseignant n'appartient a aucune promotion et ne doit pas en
+         rejoindre une : on ne lui propose pas le lien. La regle est aussi
+         appliquee cote controleur, l'affichage ne protege rien a lui seul. --}}
     @unless ($membre->promotion_id || $membre->estEnseignant())
         <p class="liens">
             <a href="{{ route('promotion.rejoindre') }}" class="bouton">Rejoindre une promotion</a>

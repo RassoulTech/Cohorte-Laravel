@@ -106,9 +106,66 @@ des modèles gratuits d'OpenRouter.
 
 ## 4. Score de réputation : stocké ou recalculé — phase 10
 
-*À rédiger en phase 10. La colonne `users.points` existe depuis la phase 1, ce
-qui oriente vers un score stocké et recalculable par commande, mais le choix
-sera argumenté à ce moment-là.*
+**Contexte.** Chaque membre a un score de contribution : dix points pour une
+réponse retenue, trois pour une réponse écrite, un pour une question posée, et
+moins cinq pour une publication refusée par la modération. Au-delà d'un seuil,
+il obtient le droit d'épingler une publication en tête du fil. Reste à décider
+où vit ce nombre.
+
+**Alternative écartée : recalculer à chaque affichage.** Le score serait déduit
+des tables à la volée, par agrégation. Il est alors toujours exact par
+construction : aucune désynchronisation n'est possible, puisqu'il n'existe
+qu'une seule source de vérité.
+
+Le coût est ailleurs. Le score apparaît sur le profil, mais aussi dans chaque
+vérification du droit d'épingler, donc potentiellement à chaque affichage du
+fil. Chaque lecture déclencherait plusieurs requêtes d'agrégation sur
+`publications` et `reponses`. C'est acceptable aujourd'hui avec une vingtaine de
+membres, et cela se dégrade avec le volume.
+
+**Choix retenu : stocker le score dans `users.points`, et fournir une commande
+de recalcul.**
+
+Le compteur est incrémenté au fil de l'eau, là où l'événement se produit :
+`ReponseRetenueController` ajoute dix points quand une réponse est retenue et
+les retire quand la désignation est annulée. La lecture est alors immédiate,
+sans jointure ni agrégation.
+
+Le défaut du stockage est réel : si un incrément est oublié quelque part, le
+compteur dérive silencieusement. C'est pourquoi le choix n'est défendable
+qu'accompagné de son correctif :
+
+```
+php artisan cohorte:recalculer-reputation
+```
+
+Cette commande reprend tous les membres par paquets de cent avec `chunkById()`,
+recalcule leur score à partir des tables, et ne met à jour que ceux qui ont
+dérivé. Elle rend le compteur vérifiable à tout moment et réparable en une
+commande.
+
+**Pourquoi ce compromis plutôt qu'un des deux extrêmes.** C'est la réponse
+professionnelle courante à ce problème : on paie la rapidité de lecture par un
+risque de dérive, et on annule ce risque par un outil de réconciliation. Le
+stockage seul serait fragile ; le recalcul permanent serait propre mais coûteux.
+
+**Détail technique du recalcul.** Le nombre de réponses retenues s'obtient par
+une sous-requête :
+
+```php
+Publication::query()
+    ->whereIn('reponse_retenue_id', $membre->reponses()->select('id'))
+    ->count();
+```
+
+Elle se lit : « compte les questions dont la réponse retenue figure parmi les
+réponses écrites par ce membre ». Aucun identifiant ne remonte en PHP : la base
+fait tout le travail en une requête.
+
+**Ce que nous avons vérifié.** Sur un jeu fraîchement semé, la commande met
+treize membres à jour. Un délégué peut épingler quel que soit son score, une
+apprenante à zéro point ne le peut pas, et une membre d'une autre promotion non
+plus.
 
 ---
 

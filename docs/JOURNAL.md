@@ -706,3 +706,62 @@ J'ai vérifié la commande de recalcul sur un jeu fraîchement semé : elle met
 treize membres à jour et n'écrit que ceux dont le score avait dérivé. Sur les
 droits, un délégué épingle quel que soit son score, une apprenante à zéro point
 ne le peut pas, et une membre d'une autre promotion non plus.
+
+---
+
+## Retour arrière documenté — `git revert`
+
+Branche : `fix/revert-documente`
+Date : 22 septembre 2026
+
+### Ce que j'ai fait, et pourquoi c'était une erreur
+
+En relisant le contrôleur du fil, j'ai trouvé que ces deux lignes faisaient
+double emploi :
+
+```php
+->orderByRaw('epingle_le IS NULL')
+->orderByDesc('epingle_le')
+```
+
+Le raisonnement semblait juste : sous MySQL, `NULL` est considéré comme la plus
+petite valeur, donc un tri décroissant sur `epingle_le` place déjà les
+publications épinglées en tête. J'ai supprimé la première ligne et commité le
+changement sous `refactor(feed): simplifier le tri des publications epinglees`,
+commit `5952ab5`.
+
+C'était une erreur. Ce comportement n'est pas universel : PostgreSQL traite
+`NULL` comme la plus grande valeur en tri décroissant et remonterait les
+publications **non** épinglées en tête. Mon « doublon » était en réalité la
+seule chose qui rendait le tri indépendant du moteur de base de données. Le code
+aurait continué à fonctionner chez moi sous MySQL et se serait cassé
+silencieusement lors d'un changement de moteur — le pire type de bug, celui qui
+ne se manifeste pas sur la machine du développeur.
+
+### Comment je l'ai corrigé, et pourquoi avec `revert`
+
+Le commit était déjà poussé. J'ai donc utilisé :
+
+```
+git revert 5952ab5
+```
+
+qui a créé le commit `386d257`, *Revert "refactor(feed): simplifier le tri..."*,
+annulant exactement les modifications du premier.
+
+J'aurais pu utiliser `git reset --hard HEAD~1`, et le résultat visible dans les
+fichiers aurait été identique. La différence est dans l'historique.
+
+`revert` **ajoute** un commit qui applique l'inverse d'un ancien : rien n'est
+supprimé, l'historique s'allonge et reste honnête. On voit que j'ai cru bien
+faire, puis que je me suis corrigé — et le journal explique pourquoi. C'est la
+seule méthode acceptable sur une branche déjà poussée.
+
+`reset --hard` **déplace le pointeur de branche en arrière** et fait disparaître
+des commits. C'est utile en local, sur du travail non partagé et non poussé.
+Mais dès qu'une branche est partagée, pousser le résultat exigerait un
+`push --force`, qui réécrirait l'historique distant et détruirait le travail de
+toute personne l'ayant récupéré.
+
+La règle que j'en retiens : si je crois avoir besoin de `--force`, c'est presque
+toujours que `revert` était la bonne réponse.

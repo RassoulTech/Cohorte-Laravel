@@ -29,6 +29,14 @@
                     @endif
                 @endif
 
+                {{-- Le quota restant est toujours visible : le membre sait
+                     ce qu'il lui reste avant de le decouvrir en etant bloque. --}}
+                @unless (auth()->user()->estEnseignant())
+                    <span class="quota">
+                        IA : {{ auth()->user()->quotaIaRestant() }}/{{ config('cohorte.quota_ia_quotidien') }}
+                    </span>
+                @endunless
+
                 <a href="{{ route('profil.show') }}">{{ auth()->user()->name }}</a>
 
                 @if (Route::has('logout'))

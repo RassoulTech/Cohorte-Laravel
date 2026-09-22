@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Entraide\DetectionDoublonController;
 use App\Http\Controllers\Entraide\QuestionController;
 use App\Http\Controllers\Entraide\ReponseController;
 use App\Http\Controllers\Entraide\ReponseRetenueController;
@@ -59,6 +60,13 @@ Route::middleware(['auth', 'promotion'])->group(function () {
     // ------------------------------------------------------------ Entraide
     Route::resource('questions', QuestionController::class)
         ->only(['index', 'create', 'store', 'show']);
+
+    // LA SEULE route soumise au quota d'IA : la detection de doublon est une
+    // assistance, retirable sans dommage. La moderation, elle, est une
+    // contrainte imposee par l'application et n'y est pas soumise.
+    Route::post('questions/verifier-doublon', [DetectionDoublonController::class, 'store'])
+        ->middleware('quota.ia')
+        ->name('questions.doublon');
 
     // Une reponse appartient a une question : son URL le dit.
     Route::post('questions/{question}/reponses', [ReponseController::class, 'store'])

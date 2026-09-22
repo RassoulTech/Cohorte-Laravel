@@ -288,3 +288,24 @@ input[type="text"] {
 .decisions form {
     margin: 0;
 }
+
+/* ---------------------------------------------------- Quota IA (phase 9) */
+
+.quota {
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    background: #2d3748;
+    font-size: 0.85rem;
+}
+
+.bouton-secondaire {
+    background: #4a5568;
+}
+
+.bouton-secondaire:hover {
+    background: #2d3748;
+}
+
+.verif-doublon {
+    margin-top: -0.5rem;
+}

@@ -79,8 +79,8 @@ class DatabaseSeeder extends Seeder
     {
         // Apprenante du groupe A : le point de depart du test de cloisonnement.
         User::factory()->create([
-            'name' => 'Awa Diop',
-            'email' => 'awa@cohorte.test',
+            'name' => 'Aminata Diallo',
+            'email' => 'aminata@cohorte.test',
             'password' => Hash::make('password'),
             'promotion_id' => $a->id,
             'role' => 'apprenant',
@@ -88,18 +88,18 @@ class DatabaseSeeder extends Seeder
 
         // Delegue du groupe A : il accedera a la file de moderation (phase 8).
         User::factory()->create([
-            'name' => 'Moussa Ba',
-            'email' => 'moussa@cohorte.test',
+            'name' => 'Ibrahima Fall',
+            'email' => 'ibrahima@cohorte.test',
             'password' => Hash::make('password'),
             'promotion_id' => $a->id,
             'role' => 'delegue',
         ]);
 
         // Apprenante du groupe B : c'est avec elle que le correcteur essaiera
-        // d'atteindre une publication d'Awa. Resultat attendu : 403.
+        // d'atteindre une publication d'Aminata. Resultat attendu : 403.
         User::factory()->create([
-            'name' => 'Fatou Sow',
-            'email' => 'fatou@cohorte.test',
+            'name' => 'Coumba Faye',
+            'email' => 'coumba@cohorte.test',
             'password' => Hash::make('password'),
             'promotion_id' => $b->id,
             'role' => 'apprenant',
@@ -108,8 +108,8 @@ class DatabaseSeeder extends Seeder
         // Enseignant : promotion_id volontairement null. C'est ce cas qui
         // justifie le middleware ExigePromotion de la phase 4.
         User::factory()->create([
-            'name' => 'Formateur',
-            'email' => 'formateur@cohorte.test',
+            'name' => 'Professeur Sène',
+            'email' => 'professeur@cohorte.test',
             'password' => Hash::make('password'),
             'promotion_id' => null,
             'role' => 'enseignant',

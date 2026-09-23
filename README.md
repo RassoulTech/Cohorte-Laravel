@@ -74,17 +74,17 @@ Le mot de passe est `password` pour les quatre comptes.
 
 | Adresse | Rôle | Promotion | Sert à démontrer |
 |---|---|---|---|
-| `awa@cohorte.test` | apprenant | Groupe A (`DWA2026`) | le parcours normal d'un membre |
-| `moussa@cohorte.test` | délégué | Groupe A (`DWA2026`) | la file de modération |
-| `fatou@cohorte.test` | apprenant | Groupe B (`DWB2026`) | le cloisonnement entre promotions |
-| `formateur@cohorte.test` | enseignant | *aucune* | la consultation sans publication |
+| `aminata@cohorte.test` | apprenant | Groupe A (`DWA2026`) | le parcours normal d'un membre |
+| `ibrahima@cohorte.test` | délégué | Groupe A (`DWA2026`) | la file de modération |
+| `coumba@cohorte.test` | apprenant | Groupe B (`DWB2026`) | le cloisonnement entre promotions |
+| `professeur@cohorte.test` | enseignant | *aucune* | la consultation sans publication |
 
 Les deux codes d'invitation, pour tester l'inscription : `DWA2026` et `DWB2026`.
 
 ### Vérifier le cloisonnement
 
-1. Se connecter avec `awa@cohorte.test` et relever l'identifiant d'une publication.
-2. Se déconnecter, se connecter avec `fatou@cohorte.test`.
+1. Se connecter avec `aminata@cohorte.test` et relever l'identifiant d'une publication.
+2. Se déconnecter, se connecter avec `coumba@cohorte.test`.
 3. Saisir directement `/publications/{id}` dans le navigateur.
 4. Résultat attendu : **erreur 403**.
 

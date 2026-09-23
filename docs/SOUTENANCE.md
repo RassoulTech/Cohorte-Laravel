@@ -17,10 +17,10 @@ Navigateur sur `http://127.0.0.1:8000`, **deux fenêtres** : une normale, une en
 
 | Compte | Mot de passe | Rôle |
 |---|---|---|
-| `awa@cohorte.test` | `password` | apprenante, groupe A |
-| `moussa@cohorte.test` | `password` | **délégué**, groupe A |
-| `fatou@cohorte.test` | `password` | apprenante, **groupe B** |
-| `formateur@cohorte.test` | `password` | enseignant, aucune promotion |
+| `aminata@cohorte.test` | `password` | apprenante, groupe A |
+| `ibrahima@cohorte.test` | `password` | **délégué**, groupe A |
+| `coumba@cohorte.test` | `password` | apprenante, **groupe B** |
+| `professeur@cohorte.test` | `password` | enseignant, aucune promotion |
 
 Codes d'invitation : **`DWA2026`** (groupe A) · **`DWB2026`** (groupe B)
 
@@ -34,14 +34,14 @@ Codes d'invitation : **`DWA2026`** (groupe A) · **`DWB2026`** (groupe B)
 |---|---|---|
 | 0:00 | `/register` → nom, e-mail, mot de passe, code **`DWA2026`** | « On entre sur invitation : sans le code d'une promotion ouverte, l'inscription est refusée. » |
 | 0:45 | Ressaie avec un code bidon `ZZZZ0000` | « Le message s'affiche sous le champ concerné, pas en haut de page. » |
-| 1:15 | Connexion **Awa** → **Le fil** | « Chaque membre ne voit que sa promotion. » |
+| 1:15 | Connexion **Aminata** → **Le fil** | « Chaque membre ne voit que sa promotion. » |
 | 2:00 | **Publier** un message normal | « Chaque publication passe par un modèle de langage avant d'être enregistrée. » |
 | 2:45 | **Publier** « Tu es complètement nul… » | « Refusée par la modération automatique. Elle n'apparaît pas dans le fil. » |
 | 3:30 | **Entraide** → une question → **répondre** → **Retenir cette réponse** | « L'auteur désigne la meilleure réponse ; son auteur gagne 10 points. » |
 | 4:30 | Sur la publication d'un autre → **Signaler** | « Au 3ᵉ signalement elle est masquée automatiquement. Le seuil est en configuration. » |
-| 5:15 | Fenêtre privée → **Moussa** → **Modération** | « Le délégué voit la file de **sa** promotion, et remet en ligne ou refuse. » |
-| 6:00 | **LE TEST** — Awa ouvre une publication, note l'ID → fenêtre privée **Fatou** → `/publications/{ID}` | « **403.** Le contenu est cloisonné, même en tapant l'URL à la main. » |
-| 6:45 | **Formateur** → **Les promotions** → **Voir le fil** | « L'enseignant consulte toutes les promotions, sans jamais pouvoir publier. » |
+| 5:15 | Fenêtre privée → **Ibrahima** → **Modération** | « Le délégué voit la file de **sa** promotion, et remet en ligne ou refuse. » |
+| 6:00 | **LE TEST** — Aminata ouvre une publication, note l'ID → fenêtre privée **Coumba** → `/publications/{ID}` | « **403.** Le contenu est cloisonné, même en tapant l'URL à la main. » |
+| 6:45 | **Professeur** → **Les promotions** → **Voir le fil** | « L'enseignant consulte toutes les promotions, sans jamais pouvoir publier. » |
 
 ---
 
